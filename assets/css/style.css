@@ -1,0 +1,940 @@
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: #1a1a1a;
+    background: linear-gradient(135deg, #e8f5e9 0%, #f1f8f4 100%);
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Header */
+header {
+    background: linear-gradient(135deg, #2e7d32 0%, #388e3c 100%);
+    color: white;
+    padding: 1.2rem 0;
+    box-shadow: 0 4px 20px rgba(46, 125, 50, 0.3);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+header nav a {
+    color: white;
+    text-decoration: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.btn-login {
+    background-color: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn-login:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Main Content */
+main {
+    padding: 2.5rem 0;
+    min-height: calc(100vh - 200px);
+}
+
+.schedule-section {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(46, 125, 50, 0.1);
+    border: 1px solid rgba(46, 125, 50, 0.1);
+}
+
+.schedule-section h2 {
+    margin-bottom: 1.5rem;
+    color: #2e7d32;
+    font-size: 2rem;
+    font-weight: 700;
+    position: relative;
+    padding-bottom: 1rem;
+}
+
+.schedule-section h2::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 60px;
+    height: 4px;
+    background: linear-gradient(90deg, #2e7d32 0%, #66bb6a 100%);
+    border-radius: 2px;
+}
+
+/* Table Styles */
+.table-responsive {
+    overflow-x: auto;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+}
+
+.schedule-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 1rem;
+}
+
+.schedule-table thead {
+    background: linear-gradient(135deg, #2e7d32 0%, #388e3c 100%);
+    color: white;
+}
+
+.schedule-table th {
+    padding: 16px;
+    text-align: left;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.schedule-table th:first-child {
+    border-top-left-radius: 12px;
+}
+
+.schedule-table th:last-child {
+    border-top-right-radius: 12px;
+}
+
+.schedule-table td {
+    padding: 16px;
+    text-align: left;
+    border-bottom: 1px solid #e8f5e9;
+}
+
+.schedule-table tbody tr {
+    background: white;
+    transition: all 0.3s ease;
+}
+
+.schedule-table tbody tr:hover {
+    background: linear-gradient(90deg, #f1f8f4 0%, #e8f5e9 100%);
+    transform: scale(1.01);
+    box-shadow: 0 4px 12px rgba(46, 125, 50, 0.1);
+}
+
+.schedule-table tbody tr:nth-child(even) {
+    background-color: #fafafa;
+}
+
+.schedule-table tbody tr:nth-child(even):hover {
+    background: linear-gradient(90deg, #f1f8f4 0%, #e8f5e9 100%);
+}
+
+.no-data {
+    text-align: center;
+    padding: 3rem;
+    color: #66bb6a;
+    font-style: italic;
+    font-size: 1.1rem;
+}
+
+/* Footer */
+footer {
+    background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%);
+    color: white;
+    text-align: center;
+    padding: 1.5rem 0;
+    margin-top: 3rem;
+    box-shadow: 0 -4px 20px rgba(46, 125, 50, 0.2);
+}
+
+/* Forms */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #2e7d32;
+    font-size: 0.95rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.85rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #66bb6a;
+    box-shadow: 0 0 0 4px rgba(102, 187, 106, 0.1);
+    background: #f1f8f4;
+}
+
+/* Buttons */
+.btn {
+    display: inline-block;
+    padding: 0.85rem 1.8rem;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #2e7d32 0%, #388e3c 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #43a047 0%, #66bb6a 100%);
+    color: white;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #2e7d32 0%, #43a047 100%);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #e53935 0%, #ef5350 100%);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #c62828 0%, #e53935 100%);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #fb8c00 0%, #ffa726 100%);
+    color: white;
+}
+
+.btn-warning:hover {
+    background: linear-gradient(135deg, #e65100 0%, #fb8c00 100%);
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #757575 0%, #9e9e9e 100%);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: linear-gradient(135deg, #616161 0%, #757575 100%);
+}
+
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+/* Alerts */
+.alert {
+    padding: 1rem 1.25rem;
+    border-radius: 10px;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid;
+    font-weight: 500;
+}
+
+.alert-success {
+    background: linear-gradient(90deg, #e8f5e9 0%, #f1f8f4 100%);
+    color: #2e7d32;
+    border-left-color: #43a047;
+}
+
+.alert-error {
+    background: linear-gradient(90deg, #ffebee 0%, #fce4ec 100%);
+    color: #c62828;
+    border-left-color: #e53935;
+}
+
+.alert-info {
+    background: linear-gradient(90deg, #e3f2fd 0%, #e8f5e9 100%);
+    color: #1b5e20;
+    border-left-color: #66bb6a;
+}
+
+/* Dashboard */
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.dashboard-header h2 {
+    color: #2e7d32;
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.dashboard-nav {
+    background: linear-gradient(135deg, #2e7d32 0%, #388e3c 100%);
+    padding: 1rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 16px rgba(46, 125, 50, 0.2);
+}
+
+.dashboard-nav a {
+    color: white;
+    text-decoration: none;
+    padding: 0.7rem 1.2rem;
+    margin-right: 0.5rem;
+    border-radius: 8px;
+    display: inline-block;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.dashboard-nav a:hover,
+.dashboard-nav a.active {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+/* Cards */
+.card {
+    background: white;
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(46, 125, 50, 0.1);
+    margin-bottom: 2rem;
+    border: 1px solid rgba(46, 125, 50, 0.1);
+}
+
+.card-header {
+    border-bottom: 2px solid #e8f5e9;
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.card-header h3 {
+    color: #2e7d32;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+/* Status Badges */
+.badge {
+    display: inline-block;
+    padding: 0.35rem 0.85rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-pending {
+    background: linear-gradient(135deg, #fb8c00 0%, #ffa726 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(251, 140, 0, 0.3);
+}
+
+.badge-approved {
+    background: linear-gradient(135deg, #43a047 0%, #66bb6a 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(67, 160, 71, 0.3);
+}
+
+.badge-rejected {
+    background: linear-gradient(135deg, #e53935 0%, #ef5350 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(229, 57, 53, 0.3);
+}
+
+.badge-active {
+    background: linear-gradient(135deg, #2e7d32 0%, #388e3c 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(46, 125, 50, 0.3);
+}
+
+.badge-inactive {
+    background: linear-gradient(135deg, #757575 0%, #9e9e9e 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(117, 117, 117, 0.3);
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.action-buttons .btn {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.875rem;
+}
+
+/* ===================================
+   RESPONSIVE DESIGN
+   =================================== */
+
+/* Container Responsive Sizing */
+@media (max-width: 1400px) {
+    .container {
+        max-width: 1140px;
+    }
+}
+
+@media (max-width: 1200px) {
+    .container {
+        max-width: 960px;
+    }
+}
+
+@media (max-width: 992px) {
+    .container {
+        max-width: 720px;
+    }
+    
+    /* Adjust font sizes */
+    body {
+        font-size: 15px;
+    }
+    
+    header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .schedule-section h2 {
+        font-size: 1.75rem;
+    }
+}
+
+/* Tablet Styles */
+@media (max-width: 768px) {
+    .container {
+        max-width: 540px;
+        padding: 0 15px;
+    }
+    
+    /* Header */
+    header {
+        padding: 1rem 0;
+    }
+    
+    header .container {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.75rem;
+    }
+    
+    header h1 {
+        font-size: 1.4rem;
+    }
+    
+    header nav {
+        margin-top: 0.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    header nav span {
+        width: 100%;
+        text-align: center;
+        margin-right: 0 !important;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Main Content */
+    main {
+        padding: 1.5rem 0;
+    }
+    
+    .schedule-section,
+    .card {
+        padding: 1.5rem;
+        border-radius: 12px;
+    }
+    
+    .schedule-section h2 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    /* Tables - Card Layout on Mobile */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .schedule-table {
+        font-size: 0.875rem;
+        min-width: 600px;
+    }
+    
+    .schedule-table th,
+    .schedule-table td {
+        padding: 10px 8px;
+        font-size: 0.85rem;
+    }
+    
+    /* Dashboard */
+    .dashboard-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .dashboard-header h2 {
+        font-size: 1.5rem;
+    }
+    
+    .dashboard-nav {
+        padding: 0.75rem;
+    }
+    
+    .dashboard-nav a {
+        display: block;
+        margin-bottom: 0.5rem;
+        margin-right: 0;
+        text-align: center;
+    }
+    
+    .dashboard-nav a:last-child {
+        margin-bottom: 0;
+    }
+    
+    /* Action Buttons */
+    .action-buttons {
+        flex-direction: column;
+        width: 100%;
+        gap: 0.5rem;
+    }
+    
+    .action-buttons .btn {
+        width: 100%;
+        text-align: center;
+    }
+    
+    /* Forms */
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        font-size: 16px; /* Prevents iOS zoom */
+    }
+    
+    /* Login */
+    .login-container {
+        margin: 2rem auto;
+    }
+    
+    .login-card {
+        padding: 2rem 1.5rem;
+    }
+    
+    /* Buttons */
+    .btn {
+        padding: 0.75rem 1.5rem;
+        font-size: 0.95rem;
+    }
+    
+    /* Cards */
+    .card-header h3 {
+        font-size: 1.25rem;
+    }
+}
+
+/* Mobile Styles */
+@media (max-width: 576px) {
+    .container {
+        padding: 0 10px;
+    }
+    
+    /* Header */
+    header h1 {
+        font-size: 1.2rem;
+    }
+    
+    header nav a {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    /* Main Content */
+    main {
+        padding: 1rem 0;
+    }
+    
+    .schedule-section,
+    .card {
+        padding: 1rem;
+        border-radius: 10px;
+    }
+    
+    .schedule-section h2 {
+        font-size: 1.3rem;
+    }
+    
+    /* Mobile Card-Based Table */
+    .schedule-table-mobile {
+        display: block;
+    }
+    
+    .schedule-table-mobile thead {
+        display: none;
+    }
+    
+    .schedule-table-mobile tbody {
+        display: block;
+    }
+    
+    .schedule-table-mobile tr {
+        display: block;
+        margin-bottom: 1rem;
+        background: white;
+        border: 1px solid #e8f5e9;
+        border-radius: 10px;
+        padding: 1rem;
+        box-shadow: 0 2px 8px rgba(46, 125, 50, 0.1);
+    }
+    
+    .schedule-table-mobile td {
+        display: block;
+        text-align: left;
+        padding: 0.5rem 0;
+        border: none;
+    }
+    
+    .schedule-table-mobile td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: #2e7d32;
+        display: block;
+        margin-bottom: 0.25rem;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+    }
+    
+    /* Horizontal Scroll Hint */
+    .table-responsive::after {
+        content: '← Swipe to see more →';
+        display: block;
+        text-align: center;
+        color: #66bb6a;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+        font-style: italic;
+    }
+    
+    /* Forms */
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    
+    .form-group label {
+        font-size: 0.9rem;
+    }
+    
+    /* Buttons */
+    .btn {
+        padding: 0.7rem 1.2rem;
+        font-size: 0.9rem;
+    }
+    
+    .btn-sm {
+        padding: 0.5rem 0.8rem;
+        font-size: 0.8rem;
+    }
+    
+    /* Login */
+    .login-container {
+        margin: 1.5rem auto;
+    }
+    
+    .login-card {
+        padding: 1.5rem 1rem;
+    }
+    
+    .login-card h2 {
+        font-size: 1.5rem;
+    }
+    
+    /* Dashboard Nav */
+    .dashboard-nav {
+        padding: 0.5rem;
+    }
+    
+    .dashboard-nav a {
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    /* Badges */
+    .badge {
+        padding: 0.3rem 0.7rem;
+        font-size: 0.75rem;
+    }
+    
+    /* Alerts */
+    .alert {
+        padding: 0.85rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    /* Footer */
+    footer {
+        padding: 1rem 0;
+        font-size: 0.85rem;
+    }
+}
+
+/* Extra Small Mobile */
+@media (max-width: 375px) {
+    header h1 {
+        font-size: 1.1rem;
+    }
+    
+    .schedule-section h2 {
+        font-size: 1.2rem;
+    }
+    
+    .btn {
+        padding: 0.65rem 1rem;
+        font-size: 0.85rem;
+    }
+}
+
+/* Landscape Orientation */
+@media (max-height: 500px) and (orientation: landscape) {
+    header {
+        padding: 0.75rem 0;
+    }
+    
+    main {
+        padding: 1rem 0;
+    }
+    
+    .schedule-section,
+    .card {
+        padding: 1rem;
+    }
+}
+
+/* Print Styles */
+@media print {
+    header,
+    footer,
+    .dashboard-nav,
+    .action-buttons,
+    .btn,
+    .no-print {
+        display: none !important;
+    }
+    
+    body {
+        background: white;
+    }
+    
+    .schedule-section,
+    .card {
+        box-shadow: none;
+        border: 1px solid #ddd;
+    }
+    
+    .schedule-table {
+        font-size: 10pt;
+    }
+    
+    .schedule-table th,
+    .schedule-table td {
+        padding: 8px;
+    }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+    .btn {
+        border: 2px solid currentColor;
+    }
+    
+    .schedule-table {
+        border: 2px solid #000;
+    }
+    
+    .schedule-table th,
+    .schedule-table td {
+        border: 1px solid #000;
+    }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Login Page Specific Styles */
+.login-container {
+    max-width: 450px;
+    margin: 4rem auto;
+}
+
+.login-card {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(46, 125, 50, 0.15);
+    border: 1px solid rgba(46, 125, 50, 0.1);
+}
+
+.login-card h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: #2e7d32;
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.back-link {
+    text-align: center;
+    margin-top: 1.5rem;
+}
+
+.back-link a {
+    color: #2e7d32;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.back-link a:hover {
+    color: #1b5e20;
+    text-decoration: underline;
+}
+
+/* Error Page Styles */
+.error-container {
+    max-width: 600px;
+    margin: 4rem auto;
+    text-align: center;
+}
+
+.error-card {
+    background: white;
+    padding: 3rem;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(46, 125, 50, 0.15);
+    border: 1px solid rgba(46, 125, 50, 0.1);
+}
+
+.error-card h1 {
+    color: #e53935;
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    font-weight: 700;
+}
+
+.error-card h2 {
+    color: #2e7d32;
+    margin-bottom: 1rem;
+}
+
+.error-card p {
+    color: #757575;
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card, .schedule-section {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f8f4;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #66bb6a 0%, #2e7d32 100%);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+}

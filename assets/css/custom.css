@@ -1,0 +1,170 @@
+/* 
+ * Custom CSS Override File
+ * Use this file to customize colors, fonts, and other styles
+ * without modifying the main style.css file
+ */
+
+/* ===================================
+   COLOR CUSTOMIZATION
+   =================================== */
+
+/* Uncomment and modify to change primary green color */
+/*
+:root {
+    --primary-green: #2e7d32;
+    --secondary-green: #388e3c;
+    --light-green: #66bb6a;
+    --dark-green: #1b5e20;
+    --background-light: #e8f5e9;
+    --background-lighter: #f1f8f4;
+}
+*/
+
+/* ===================================
+   FONT CUSTOMIZATION
+   =================================== */
+
+/* Uncomment to use custom fonts */
+/*
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+body {
+    font-family: 'Poppins', sans-serif;
+}
+*/
+
+/* ===================================
+   LOGO CUSTOMIZATION
+   =================================== */
+
+/* Add your logo */
+/*
+header h1::before {
+    content: '';
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    background-image: url('../images/logo.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    margin-right: 10px;
+    vertical-align: middle;
+}
+*/
+
+/* ===================================
+   CUSTOM BREAKPOINTS
+   =================================== */
+
+/* Add custom responsive rules */
+/*
+@media (max-width: 1400px) {
+    .container {
+        max-width: 1140px;
+    }
+}
+*/
+
+/* ===================================
+   CUSTOM ANIMATIONS
+   =================================== */
+
+/* Add custom animations */
+/*
+@keyframes customFade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.custom-element {
+    animation: customFade 0.5s ease-in;
+}
+*/
+
+/* ===================================
+   ORGANIZATION-SPECIFIC STYLES
+   =================================== */
+
+/* Add your organization's specific styles here */
+/*
+.organization-header {
+    background: linear-gradient(135deg, #your-color-1 0%, #your-color-2 100%);
+}
+*/
+
+/* ===================================
+   PRINT STYLES
+   =================================== */
+
+/* Customize print layout */
+/*
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .print-only {
+        display: block !important;
+    }
+}
+*/
+
+/* ===================================
+   DARK MODE (OPTIONAL)
+   =================================== */
+
+/* Uncomment to enable dark mode */
+/*
+@media (prefers-color-scheme: dark) {
+    body {
+        background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%);
+        color: #f1f8f4;
+    }
+    
+    .card,
+    .schedule-section {
+        background: #1e1e1e;
+        color: #f1f8f4;
+        border-color: rgba(102, 187, 106, 0.2);
+    }
+    
+    .schedule-table tbody tr {
+        background: #2e2e2e;
+    }
+    
+    .schedule-table tbody tr:hover {
+        background: #3e3e3e;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        background: #2e2e2e;
+        color: #f1f8f4;
+        border-color: #4e4e4e;
+    }
+}
+*/
+
+/* ===================================
+   ACCESSIBILITY ENHANCEMENTS
+   =================================== */
+
+/* High contrast mode improvements */
+/*
+@media (prefers-contrast: high) {
+    .btn {
+        border: 3px solid currentColor;
+    }
+    
+    .schedule-table {
+        border: 2px solid #000;
+    }
+}
+*/
+
+/* ===================================
+   CUSTOM COMPONENTS
+   =================================== */
+
+/* Add your custom component styles here */

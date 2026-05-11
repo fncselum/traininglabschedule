@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="theme-color" content="#2e7d32">
+    <title>Responsive Design Test Page</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        .test-section {
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        .test-section h3 {
+            color: #2e7d32;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e8f5e9;
+        }
+        .device-info {
+            background: linear-gradient(135deg, #e8f5e9 0%, #f1f8f4 100%);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+        .device-info p {
+            margin: 0.5rem 0;
+            font-weight: 600;
+        }
+        .color-box {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            margin: 0.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .touch-test {
+            display: inline-block;
+            padding: 1rem;
+            margin: 0.5rem;
+            background: #2e7d32;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .touch-test:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Responsive Test Page</h1>
+            <nav>
+                <a href="index.php">Home</a>
+                <a href="login.php" class="btn-login">Login</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Device Information -->
+        <div class="device-info">
+            <h2>Current Device Information</h2>
+            <p>Screen Width: <span id="screenWidth"></span>px</p>
+            <p>Screen Height: <span id="screenHeight"></span>px</p>
+            <p>Viewport Width: <span id="viewportWidth"></span>px</p>
+            <p>Viewport Height: <span id="viewportHeight"></span>px</p>
+            <p>Device Pixel Ratio: <span id="pixelRatio"></span></p>
+            <p>Breakpoint: <span id="breakpoint"></span></p>
+            <p>Touch Support: <span id="touchSupport"></span></p>
+            <p>Orientation: <span id="orientation"></span></p>
+        </div>
+
+        <!-- Typography Test -->
+        <div class="test-section">
+            <h3>Typography Test</h3>
+            <h1>Heading 1 - Main Title</h1>
+            <h2>Heading 2 - Section Title</h2>
+            <h3>Heading 3 - Subsection</h3>
+            <p>Regular paragraph text. Lorem ipsum dolor sit amet, consectetur adipiscing elit. This text should be readable on all devices.</p>
+            <p><strong>Bold text</strong> and <em>italic text</em> for emphasis.</p>
+            <p><small>Small text for fine print or captions.</small></p>
+        </div>
+
+        <!-- Button Test -->
+        <div class="test-section">
+            <h3>Button Test (Minimum 44x44px Touch Targets)</h3>
+            <button class="btn btn-primary">Primary Button</button>
+            <button class="btn btn-success">Success Button</button>
+            <button class="btn btn-warning">Warning Button</button>
+            <button class="btn btn-danger">Danger Button</button>
+            <button class="btn btn-secondary">Secondary Button</button>
+            <br><br>
+            <button class="btn btn-primary btn-sm">Small Button</button>
+            <button class="btn btn-secondary btn-sm">Small Secondary</button>
+        </div>
+
+        <!-- Action Buttons Test -->
+        <div class="test-section">
+            <h3>Action Buttons (Responsive Stack)</h3>
+            <div class="action-buttons">
+                <button class="btn btn-primary">Save Changes</button>
+                <button class="btn btn-warning">Edit</button>
+                <button class="btn btn-danger">Delete</button>
+                <button class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+
+        <!-- Form Test -->
+        <div class="test-section">
+            <h3>Form Elements Test</h3>
+            <form onsubmit="event.preventDefault(); alert('Form submitted!');">
+                <div class="form-group">
+                    <label for="text-input">Text Input</label>
+                    <input type="text" id="text-input" placeholder="Enter text here">
+                </div>
+                
+                <div class="form-group">
+                    <label for="email-input">Email Input</label>
+                    <input type="email" id="email-input" placeholder="email@example.com">
+                </div>
+                
+                <div class="form-group">
+                    <label for="select-input">Select Dropdown</label>
+                    <select id="select-input">
+                        <option>Option 1</option>
+                        <option>Option 2</option>
+                        <option>Option 3</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="textarea-input">Textarea</label>
+                    <textarea id="textarea-input" placeholder="Enter multiple lines of text"></textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Submit Form</button>
+            </form>
+        </div>
+
+        <!-- Table Test -->
+        <div class="test-section">
+            <h3>Responsive Table Test</h3>
+            <p>On mobile (< 576px), this table converts to card layout automatically.</p>
+            <div class="table-responsive">
+                <table class="schedule-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Title</th>
+                            <th>Time</th>
+                            <th>Location</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>May 8, 2026</td>
+                            <td>Training Session A</td>
+                            <td>9:00 AM - 12:00 PM</td>
+                            <td>Lab Room 101</td>
+                            <td><span class="badge badge-approved">Approved</span></td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn btn-warning btn-sm">Edit</button>
+                                    <button class="btn btn-danger btn-sm">Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>May 9, 2026</td>
+                            <td>Training Session B</td>
+                            <td>1:00 PM - 4:00 PM</td>
+                            <td>Lab Room 102</td>
+                            <td><span class="badge badge-pending">Pending</span></td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn btn-warning btn-sm">Edit</button>
+                                    <button class="btn btn-danger btn-sm">Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>May 10, 2026</td>
+                            <td>Training Session C</td>
+                            <td>10:00 AM - 1:00 PM</td>
+                            <td>Lab Room 103</td>
+                            <td><span class="badge badge-rejected">Rejected</span></td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn btn-warning btn-sm">Edit</button>
+                                    <button class="btn btn-danger btn-sm">Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Alert Test -->
+        <div class="test-section">
+            <h3>Alert Messages Test</h3>
+            <div class="alert alert-success">Success! Your changes have been saved.</div>
+            <div class="alert alert-error">Error! Something went wrong. Please try again.</div>
+            <div class="alert alert-info">Info: This is an informational message.</div>
+        </div>
+
+        <!-- Badge Test -->
+        <div class="test-section">
+            <h3>Status Badges Test</h3>
+            <span class="badge badge-pending">Pending</span>
+            <span class="badge badge-approved">Approved</span>
+            <span class="badge badge-rejected">Rejected</span>
+            <span class="badge badge-active">Active</span>
+            <span class="badge badge-inactive">Inactive</span>
+        </div>
+
+        <!-- Card Test -->
+        <div class="test-section">
+            <h3>Card Component Test</h3>
+            <div class="card">
+                <div class="card-header">
+                    <h3>Card Title</h3>
+                </div>
+                <p>This is a card component. It should have proper spacing and shadows on all devices.</p>
+                <button class="btn btn-primary">Card Action</button>
+            </div>
+        </div>
+
+        <!-- Touch Test -->
+        <div class="test-section">
+            <h3>Touch Feedback Test</h3>
+            <p>Tap these boxes on a touch device to see visual feedback:</p>
+            <div class="touch-test" onclick="this.style.background='#66bb6a'; setTimeout(() => this.style.background='#2e7d32', 200);">
+                Tap Me 1
+            </div>
+            <div class="touch-test" onclick="this.style.background='#66bb6a'; setTimeout(() => this.style.background='#2e7d32', 200);">
+                Tap Me 2
+            </div>
+            <div class="touch-test" onclick="this.style.background='#66bb6a'; setTimeout(() => this.style.background='#2e7d32', 200);">
+                Tap Me 3
+            </div>
+        </div>
+
+        <!-- Color Palette Test -->
+        <div class="test-section">
+            <h3>Color Palette Test</h3>
+            <div class="color-box" style="background: #2e7d32;" title="Primary Green"></div>
+            <div class="color-box" style="background: #388e3c;" title="Secondary Green"></div>
+            <div class="color-box" style="background: #66bb6a;" title="Light Green"></div>
+            <div class="color-box" style="background: #1b5e20;" title="Dark Green"></div>
+            <div class="color-box" style="background: #e8f5e9;" title="Background Light"></div>
+            <div class="color-box" style="background: #f1f8f4;" title="Background Lighter"></div>
+        </div>
+
+        <!-- Scroll Test -->
+        <div class="test-section">
+            <h3>Scroll Behavior Test</h3>
+            <p>Scroll down to see the "Back to Top" button appear (after 300px of scrolling).</p>
+            <p>The header should also get a shadow when scrolled.</p>
+        </div>
+
+        <!-- Spacing Test -->
+        <div class="test-section" style="min-height: 500px;">
+            <h3>Spacing and Layout Test</h3>
+            <p>This section has extra height to test scrolling behavior.</p>
+            <p>Check that:</p>
+            <ul>
+                <li>Padding is consistent</li>
+                <li>Margins are appropriate</li>
+                <li>Content doesn't touch edges on mobile</li>
+                <li>Line height is readable</li>
+            </ul>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 Training Laboratory Schedule System - Responsive Test Page</p>
+        </div>
+    </footer>
+    
+    <script src="assets/js/mobile-menu.js"></script>
+    <script src="assets/js/responsive.js"></script>
+    <script>
+        // Update device information
+        function updateDeviceInfo() {
+            document.getElementById('screenWidth').textContent = screen.width;
+            document.getElementById('screenHeight').textContent = screen.height;
+            document.getElementById('viewportWidth').textContent = window.innerWidth;
+            document.getElementById('viewportHeight').textContent = window.innerHeight;
+            document.getElementById('pixelRatio').textContent = window.devicePixelRatio;
+            document.getElementById('touchSupport').textContent = ('ontouchstart' in window) ? 'Yes' : 'No';
+            document.getElementById('orientation').textContent = window.innerWidth > window.innerHeight ? 'Landscape' : 'Portrait';
+            
+            // Get breakpoint
+            const width = window.innerWidth;
+            let breakpoint = 'xl (≥1200px)';
+            if (width < 576) breakpoint = 'xs (<576px)';
+            else if (width < 768) breakpoint = 'sm (576-767px)';
+            else if (width < 992) breakpoint = 'md (768-991px)';
+            else if (width < 1200) breakpoint = 'lg (992-1199px)';
+            document.getElementById('breakpoint').textContent = breakpoint;
+        }
+        
+        updateDeviceInfo();
+        window.addEventListener('resize', updateDeviceInfo);
+        window.addEventListener('orientationchange', updateDeviceInfo);
+        
+        // Log test page load
+        console.log('='.repeat(50));
+        console.log('RESPONSIVE TEST PAGE LOADED');
+        console.log('='.repeat(50));
+        console.log('Screen:', screen.width + 'x' + screen.height);
+        console.log('Viewport:', window.innerWidth + 'x' + window.innerHeight);
+        console.log('Device Pixel Ratio:', window.devicePixelRatio);
+        console.log('Touch Support:', ('ontouchstart' in window) ? 'Yes' : 'No');
+        console.log('User Agent:', navigator.userAgent);
+        console.log('='.repeat(50));
+    </script>
+</body>
+</html>
