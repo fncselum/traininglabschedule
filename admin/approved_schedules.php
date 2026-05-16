@@ -44,17 +44,13 @@ $approved_schedules = $conn->query("SELECT * FROM approved_schedules ORDER BY st
                         <span class="sidebar-nav-icon">📊</span>
                         <span class="sidebar-nav-text">Dashboard</span>
                     </a>
-                    <a href="pending_requests.php" class="sidebar-nav-item">
-                        <span class="sidebar-nav-icon">⏳</span>
-                        <span class="sidebar-nav-text">Pending Requests</span>
-                    </a>
                     <a href="approved_schedules.php" class="sidebar-nav-item active">
                         <span class="sidebar-nav-icon">✅</span>
                         <span class="sidebar-nav-text">Manage Schedules</span>
                     </a>
                     <a href="../index.php" class="sidebar-nav-item">
                         <span class="sidebar-nav-icon">📅</span>
-                        <span class="sidebar-nav-text">Public Schedule</span>
+                        <span class="sidebar-nav-text">View Calendar</span>
                     </a>
                 </div>
                 

@@ -204,7 +204,7 @@ $notifications = $stmt_notif->get_result();
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <a href="dashboard.php" class="sidebar-logo">
+                <a href="../index.php" class="sidebar-logo">
                     <div class="sidebar-logo-icon">🔬</div>
                     <div class="sidebar-logo-text">
                         <span class="sidebar-logo-title">Training Lab</span>
@@ -228,14 +228,6 @@ $notifications = $stmt_notif->get_result();
             <nav class="sidebar-nav">
                 <div class="sidebar-nav-section">
                     <div class="sidebar-nav-title">Main Menu</div>
-                    <a href="dashboard.php" class="sidebar-nav-item">
-                        <span class="sidebar-nav-icon">📊</span>
-                        <span class="sidebar-nav-text">Dashboard</span>
-                    </a>
-                    <a href="submit_request.php" class="sidebar-nav-item">
-                        <span class="sidebar-nav-icon">➕</span>
-                        <span class="sidebar-nav-text">Submit Request</span>
-                    </a>
                     <a href="../index.php" class="sidebar-nav-item">
                         <span class="sidebar-nav-icon">📅</span>
                         <span class="sidebar-nav-text">View Schedule</span>
@@ -324,7 +316,7 @@ $notifications = $stmt_notif->get_result();
                             <button type="submit" name="change_password" class="btn btn-primary">
                                 Change Password
                             </button>
-                            <a href="dashboard.php" class="btn btn-secondary">Cancel</a>
+                            <a href="../index.php" class="btn btn-secondary">Cancel</a>
                         </div>
                     </form>
                 </div>

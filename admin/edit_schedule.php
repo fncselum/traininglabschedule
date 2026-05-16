@@ -98,17 +98,13 @@ $schedule = $result->fetch_assoc();
                         <span class="sidebar-nav-icon">📊</span>
                         <span class="sidebar-nav-text">Dashboard</span>
                     </a>
-                    <a href="pending_requests.php" class="sidebar-nav-item">
-                        <span class="sidebar-nav-icon">⏳</span>
-                        <span class="sidebar-nav-text">Pending Requests</span>
-                    </a>
                     <a href="approved_schedules.php" class="sidebar-nav-item active">
                         <span class="sidebar-nav-icon">✅</span>
                         <span class="sidebar-nav-text">Manage Schedules</span>
                     </a>
                     <a href="../index.php" class="sidebar-nav-item">
                         <span class="sidebar-nav-icon">📅</span>
-                        <span class="sidebar-nav-text">Public Schedule</span>
+                        <span class="sidebar-nav-text">View Calendar</span>
                     </a>
                 </div>
                 
@@ -181,8 +177,8 @@ $schedule = $result->fetch_assoc();
                                 </div>
                                 
                                 <div class="form-group">
-                                    <label for="participants">Participants *</label>
-                                    <textarea id="participants" name="participants" required><?php echo htmlspecialchars($schedule['participants']); ?></textarea>
+                                    <label for="participants">Number of Participants *</label>
+                                    <input type="number" id="participants" name="participants" value="<?php echo htmlspecialchars($schedule['participants']); ?>" required min="1">
                                 </div>
                                 
                                 <div class="form-group">

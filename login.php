@@ -10,7 +10,7 @@ if (isLoggedIn()) {
     if ($role === 'superadmin') {
         header('Location: superadmin/dashboard.php');
     } elseif ($role === 'admin') {
-        header('Location: admin/dashboard.php');
+        header('Location: index.php');
     } elseif ($role === 'requestor') {
         header('Location: index.php');
     }
@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($user['role'] === 'superadmin') {
                     header('Location: superadmin/dashboard.php');
                 } elseif ($user['role'] === 'admin') {
-                    header('Location: admin/dashboard.php');
+                    header('Location: index.php');
                 } elseif ($user['role'] === 'requestor') {
                     header('Location: index.php');
                 }

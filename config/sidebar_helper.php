@@ -39,13 +39,9 @@ function renderRequestorNav($activePage = 'dashboard') {
     <nav class="sidebar-nav">
         <div class="sidebar-nav-section">
             <div class="sidebar-nav-title">Main Menu</div>
-            <a href="dashboard.php" class="sidebar-nav-item <?php echo $activePage === 'dashboard' ? 'active' : ''; ?>">
+            <a href="index.php" class="sidebar-nav-item <?php echo $activePage === 'dashboard' ? 'active' : ''; ?>">
                 <span class="sidebar-nav-icon">📊</span>
                 <span class="sidebar-nav-text">Dashboard</span>
-            </a>
-            <a href="submit_request.php" class="sidebar-nav-item <?php echo $activePage === 'submit' ? 'active' : ''; ?>">
-                <span class="sidebar-nav-icon">➕</span>
-                <span class="sidebar-nav-text">Submit Request</span>
             </a>
             <a href="../index.php" class="sidebar-nav-item <?php echo $activePage === 'schedule' ? 'active' : ''; ?>">
                 <span class="sidebar-nav-icon">📅</span>

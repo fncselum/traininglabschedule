@@ -14,7 +14,7 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 if ($result->num_rows === 0) {
-    header('Location: dashboard.php');
+    header('Location: index.php');
     exit();
 }
 
@@ -35,7 +35,7 @@ $request = $result->fetch_assoc();
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <a href="dashboard.php" class="sidebar-logo">
+                <a href="index.php" class="sidebar-logo">
                     <div class="sidebar-logo-icon">🔬</div>
                     <div class="sidebar-logo-text">
                         <span class="sidebar-logo-title">Training Lab</span>
@@ -59,13 +59,9 @@ $request = $result->fetch_assoc();
             <nav class="sidebar-nav">
                 <div class="sidebar-nav-section">
                     <div class="sidebar-nav-title">Main Menu</div>
-                    <a href="dashboard.php" class="sidebar-nav-item">
+                    <a href="index.php" class="sidebar-nav-item">
                         <span class="sidebar-nav-icon">📊</span>
                         <span class="sidebar-nav-text">Dashboard</span>
-                    </a>
-                    <a href="submit_request.php" class="sidebar-nav-item">
-                        <span class="sidebar-nav-icon">➕</span>
-                        <span class="sidebar-nav-text">Submit Request</span>
                     </a>
                     <a href="../index.php" class="sidebar-nav-item">
                         <span class="sidebar-nav-icon">📅</span>
@@ -162,7 +158,7 @@ $request = $result->fetch_assoc();
                         </table>
 
                         <div style="margin-top: 1.5rem;">
-                            <a href="dashboard.php" class="btn btn-secondary">Back to Dashboard</a>
+                            <a href="index.php" class="btn btn-secondary">Back to Dashboard</a>
                         </div>
                     </div>
                 </div>

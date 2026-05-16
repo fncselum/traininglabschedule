@@ -55,4 +55,3 @@ function logout() {
     header('Location: /TraininglabSchedule/login.php');
     exit();
 }
-?>

@@ -6,11 +6,11 @@ requireAnyRole(['admin', 'superadmin']);
 
 $conn = getDBConnection();
 
-// Fetch pending schedule requests
-$pending_requests = $conn->query("SELECT sr.*, u.username FROM schedule_requests sr JOIN users u ON sr.requestor_id = u.user_id WHERE sr.status = 'pending' ORDER BY sr.created_at DESC");
-
 // Fetch approved schedules
 $approved_schedules = $conn->query("SELECT * FROM approved_schedules ORDER BY start_date DESC, start_time DESC LIMIT 10");
+
+// Count total approved schedules
+$total_schedules = $conn->query("SELECT COUNT(*) as total FROM approved_schedules")->fetch_assoc()['total'];
 ?>
 
 <!DOCTYPE html>
@@ -80,20 +80,13 @@ $approved_schedules = $conn->query("SELECT * FROM approved_schedules ORDER BY st
                         <span class="sidebar-nav-icon">📊</span>
                         <span class="sidebar-nav-text">Dashboard</span>
                     </a>
-                    <a href="pending_requests.php" class="sidebar-nav-item">
-                        <span class="sidebar-nav-icon">⏳</span>
-                        <span class="sidebar-nav-text">Pending Requests</span>
-                        <?php if ($pending_requests->num_rows > 0): ?>
-                            <span class="sidebar-nav-badge"><?php echo $pending_requests->num_rows; ?></span>
-                        <?php endif; ?>
-                    </a>
                     <a href="approved_schedules.php" class="sidebar-nav-item">
                         <span class="sidebar-nav-icon">✅</span>
                         <span class="sidebar-nav-text">Manage Schedules</span>
                     </a>
                     <a href="../index.php" class="sidebar-nav-item">
                         <span class="sidebar-nav-icon">📅</span>
-                        <span class="sidebar-nav-text">Public Schedule</span>
+                        <span class="sidebar-nav-text">View Calendar</span>
                     </a>
                 </div>
                 
@@ -136,55 +129,21 @@ $approved_schedules = $conn->query("SELECT * FROM approved_schedules ORDER BY st
             </header>
             
             <main class="content-wrapper">
-
                 <div class="content-card">
                     <div class="content-card-header">
-                        <h3 class="content-card-title">Pending Schedule Requests (<?php echo $pending_requests->num_rows; ?>)</h3>
-                        <div class="content-card-actions">
-                            <a href="pending_requests.php" class="btn btn-primary btn-sm">View All</a>
-                        </div>
+                        <h3 class="content-card-title">📊 Dashboard Overview</h3>
                     </div>
                     <div class="content-card-body">
-                        <?php if ($pending_requests->num_rows > 0): ?>
-                            <div class="table-responsive">
-                                <table class="schedule-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Submitted By</th>
-                                            <th>Date Submitted</th>
-                                            <th>Start Date</th>
-                                            <th>Title</th>
-                                            <th>Time</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php 
-                                        $pending_requests->data_seek(0); // Reset pointer
-                                        while ($row = $pending_requests->fetch_assoc()): 
-                                        ?>
-                                            <tr>
-                                                <td><?php echo htmlspecialchars($row['username']); ?></td>
-                                                <td><?php echo date('M d, Y', strtotime($row['created_at'])); ?></td>
-                                                <td><?php echo date('M d, Y', strtotime($row['start_date'])); ?></td>
-                                                <td><?php echo htmlspecialchars($row['title']); ?></td>
-                                                <td>
-                                                    <?php echo date('h:i A', strtotime($row['start_time'])); ?> - 
-                                                    <?php echo date('h:i A', strtotime($row['end_time'])); ?>
-                                                </td>
-                                                <td>
-                                                    <div class="action-buttons">
-                                                        <a href="review_request.php?id=<?php echo $row['request_id']; ?>" class="btn btn-primary btn-sm">Review</a>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        <?php endwhile; ?>
-                                    </tbody>
-                                </table>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                            <div style="background: linear-gradient(135deg, #4CAF50 0%, #66bb6a 100%); padding: 2rem; border-radius: 12px; color: white; box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);">
+                                <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 0.5rem;">Total Schedules</div>
+                                <div style="font-size: 2.5rem; font-weight: 700;"><?php echo $total_schedules; ?></div>
                             </div>
-                        <?php else: ?>
-                            <p class="no-data">No pending requests at this time.</p>
-                        <?php endif; ?>
+                        </div>
+                        <p style="color: #6b7280; margin: 0;">
+                            ℹ️ All schedule requests are automatically approved if there are no time conflicts. 
+                            Requestors are notified immediately when conflicts are detected.
+                        </p>
                     </div>
                 </div>
 
