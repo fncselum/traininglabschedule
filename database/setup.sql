@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS approved_schedules (
     participants TEXT NOT NULL,
     program_owner VARCHAR(100) NOT NULL,
     office VARCHAR(100) NOT NULL,
+    requestor_email VARCHAR(100) DEFAULT NULL,
     approved_by INT NOT NULL,
     approved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -93,3 +94,6 @@ ALTER TABLE schedule_requests ADD COLUMN IF NOT EXISTS deped_email VARCHAR(100) 
 
 -- Update existing users with default email addresses (modify as needed)
 UPDATE users SET email = CONCAT(username, '@traininglab.edu') WHERE email IS NULL;
+
+-- Add requestor_email column to approved_schedules (for walk-in schedules)
+ALTER TABLE approved_schedules ADD COLUMN IF NOT EXISTS requestor_email VARCHAR(100) DEFAULT NULL AFTER office;

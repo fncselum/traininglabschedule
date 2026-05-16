@@ -382,11 +382,36 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
             align-items: stretch;
             position: relative;
             min-height: 0;
+            cursor: pointer;
         }
         
         .calendar-day:hover {
             border-color: #4CAF50;
-            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
+            box-shadow: 0 4px 14px rgba(76, 175, 80, 0.25);
+            background: #f9fffe;
+            transform: translateY(-1px);
+        }
+
+        /* Click-to-view hint that appears on hover */
+        .calendar-day:not(.other-month)::after {
+            content: '👁 View';
+            position: absolute;
+            bottom: 3px;
+            right: 4px;
+            font-size: 0.6rem;
+            font-weight: 700;
+            color: #4CAF50;
+            background: rgba(255,255,255,.88);
+            border: 1px solid #c8e6c9;
+            border-radius: 20px;
+            padding: 1px 6px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+            z-index: 5;
+        }
+        .calendar-day:not(.other-month):hover::after {
+            opacity: 1;
         }
         
         /* Plus button for requestors */
@@ -525,11 +550,12 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
             transition: all 0.2s ease;
             font-size: 0.65rem;
             flex-shrink: 0;
+            pointer-events: none; /* let click pass through to calendar-day */
         }
         
-        .schedule-item:hover {
+        .calendar-day:hover .schedule-item {
             background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%);
-            transform: translateX(2px);
+            border-left-color: #2e7d32;
         }
         
         .schedule-title {
@@ -1041,6 +1067,148 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
             transform: scale(1.2);
         }
         
+        /* ── Admin action buttons inside schedule detail modal ── */
+        .admin-modal-views { position: relative; }
+        .admin-modal-view { display: none; }
+        .admin-modal-view.active { display: block; }
+        .admin-action-footer {
+            display: flex; gap: 0.75rem; margin-top: 1.5rem;
+        }
+        .btn-admin-pullout {
+            flex: 1; padding: 0.8rem 1rem; border: none; border-radius: 10px;
+            background: linear-gradient(135deg, #ff5722, #e53935);
+            color: #fff; font-size: 0.9rem; font-weight: 700; cursor: pointer;
+            transition: all 0.2s; box-shadow: 0 4px 12px rgba(229,57,53,.3);
+            display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+        }
+        .btn-admin-pullout:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(229,57,53,.45); }
+        .btn-admin-reschedule {
+            flex: 1; padding: 0.8rem 1rem; border: none; border-radius: 10px;
+            background: linear-gradient(135deg, #1e3a5f, #2e5984);
+            color: #fff; font-size: 0.9rem; font-weight: 700; cursor: pointer;
+            transition: all 0.2s; box-shadow: 0 4px 12px rgba(30,58,95,.3);
+            display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+        }
+        .btn-admin-reschedule:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(30,58,95,.4); }
+        .btn-admin-back {
+            padding: 0.7rem 1.2rem; border: 2px solid #e5e7eb; border-radius: 9px;
+            background: #fff; color: #6b7280; font-size: 0.88rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .btn-admin-back:hover { border-color: #9ca3af; color: #374151; }
+        .btn-admin-confirm-pullout {
+            flex: 1; padding: 0.75rem 1rem; border: none; border-radius: 9px;
+            background: linear-gradient(135deg, #ff5722, #e53935);
+            color: #fff; font-size: 0.9rem; font-weight: 700; cursor: pointer;
+        }
+        .btn-admin-confirm-reschedule {
+            flex: 1; padding: 0.75rem 1rem; border: none; border-radius: 9px;
+            background: linear-gradient(135deg, #4CAF50, #43a047);
+            color: #fff; font-size: 0.9rem; font-weight: 700; cursor: pointer;
+        }
+        .admin-warning-box {
+            background: #fff8e1; border: 1px solid #fbbf24; border-radius: 8px;
+            padding: 0.9rem 1.1rem; display: flex; gap: 0.65rem;
+            align-items: flex-start; margin-bottom: 1rem;
+            font-size: 0.88rem; color: #92400e; line-height: 1.5;
+        }
+        .admin-warning-box strong { display: block; margin-bottom: 0.25rem; }
+        .admin-form-group { margin-bottom: 1rem; }
+        .admin-form-group label {
+            display: block; font-size: 0.8rem; font-weight: 700;
+            color: #374151; margin-bottom: 0.35rem;
+            text-transform: uppercase; letter-spacing: 0.04em;
+        }
+        .admin-form-group input, .admin-form-group textarea {
+            width: 100%; padding: 0.6rem 0.85rem;
+            border: 2px solid #e5e7eb; border-radius: 8px;
+            font-size: 0.9rem; font-family: inherit; transition: border-color 0.2s;
+        }
+        .admin-form-group input:focus, .admin-form-group textarea:focus {
+            outline: none; border-color: #4CAF50;
+        }
+        .admin-form-group textarea { resize: vertical; min-height: 66px; }
+        .admin-time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        .admin-current-info {
+            background: #f8f9fa; border-radius: 7px; padding: 0.65rem 0.9rem;
+            font-size: 0.8rem; color: #6b7280; margin-bottom: 1rem;
+            border-left: 3px solid #4CAF50;
+        }
+
+        /* Admin add-schedule button on calendar */
+        .admin-add-btn {
+            background: linear-gradient(135deg, #1e3a5f, #2e5984) !important;
+            box-shadow: 0 2px 8px rgba(30,58,95,.4) !important;
+        }
+        .admin-add-btn:hover {
+            background: linear-gradient(135deg, #2e5984, #3a72a8) !important;
+        }
+
+        /* Admin walk-in modal on calendar */
+        .cal-add-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,.55); backdrop-filter: blur(4px);
+            z-index: 1200; align-items: center; justify-content: center;
+        }
+        .cal-add-overlay.open { display: flex; }
+        .cal-add-box {
+            background: #fff; border-radius: 18px; width: 90%; max-width: 540px;
+            box-shadow: 0 24px 64px rgba(0,0,0,.3);
+            animation: slideUp .35s cubic-bezier(.34,1.56,.64,1);
+            max-height: 90vh; overflow-y: auto;
+        }
+        .cal-add-header {
+            padding: 1.4rem 1.75rem 1rem; border-bottom: 1px solid #f0f0f0;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; background: #fff;
+        }
+        .cal-add-title {
+            font-size: 1.2rem; font-weight: 700; color: #1e3a5f;
+        }
+        .cal-add-close {
+            background: none; border: none; font-size: 1.5rem;
+            cursor: pointer; color: #9ca3af; padding: .25rem; border-radius: 6px;
+            transition: color .2s, background .2s;
+        }
+        .cal-add-close:hover { color: #374151; background: #f3f4f6; }
+        .cal-add-body { padding: 1.25rem 1.75rem; }
+        .cal-add-footer {
+            padding: 1rem 1.75rem 1.5rem; border-top: 1px solid #f0f0f0;
+            display: flex; gap: .75rem; justify-content: flex-end;
+            position: sticky; bottom: 0; background: #fff;
+        }
+        .cal-form-group { margin-bottom: 1rem; }
+        .cal-form-group label {
+            display: block; font-size: .8rem; font-weight: 700;
+            color: #374151; margin-bottom: .4rem;
+            text-transform: uppercase; letter-spacing: .04em;
+        }
+        .cal-form-group input, .cal-form-group textarea {
+            width: 100%; padding: .65rem .9rem;
+            border: 2px solid #e5e7eb; border-radius: 8px;
+            font-size: .92rem; font-family: inherit; transition: border-color .2s;
+            box-sizing: border-box;
+        }
+        .cal-form-group input:focus, .cal-form-group textarea:focus { outline: none; border-color: #1e3a5f; }
+        .cal-time-row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+        .cal-walkin-note {
+            background: #e3f2fd; border: 1px solid #90caf9; border-radius: 10px;
+            padding: .8rem 1rem; margin-bottom: 1.1rem;
+            font-size: .84rem; color: #1565c0; display: flex; gap: .5rem;
+        }
+        .btn-cal-submit {
+            padding: .7rem 1.5rem; border: none; border-radius: 9px;
+            background: linear-gradient(135deg, #1e3a5f, #2e5984);
+            color: #fff; font-size: .9rem; font-weight: 700; cursor: pointer;
+            transition: all .2s;
+        }
+        .btn-cal-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(30,58,95,.35); }
+        .btn-cal-cancel2 {
+            padding: .7rem 1.25rem; border: 2px solid #e5e7eb; border-radius: 9px;
+            background: #fff; color: #6b7280; font-size: .9rem; font-weight: 600; cursor: pointer;
+        }
+        .btn-cal-cancel2:hover { border-color: #9ca3af; color: #374151; }
+
         /* Compact Footer */
         footer {
             background: #1e3a5f;
@@ -1487,6 +1655,9 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
                     <?php if ($isRequestor && !$holidayName): ?>
                         <button class="add-schedule-btn" onclick="event.stopPropagation(); openRequestForm('<?php echo $fullDate; ?>', '<?php echo $dateStr; ?>')" title="Add Schedule Request">+</button>
                     <?php endif; ?>
+                    <?php if (($userRole === 'admin' || $userRole === 'superadmin') && !$holidayName): ?>
+                        <button class="add-schedule-btn admin-add-btn" onclick="event.stopPropagation(); openAdminAddForm('<?php echo $fullDate; ?>', '<?php echo $dateStr; ?>')" title="Add Walk-in Schedule">+</button>
+                    <?php endif; ?>
                 </div>
             <?php endfor; ?>
 
@@ -1510,14 +1681,85 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
         <div class="details-content" id="dayListContent"></div>
     </div>
     
-    <!-- Modal for Schedule Details (Admin) -->
+    <!-- Modal for Schedule Details (Admin) - 3 views -->
     <?php if ($userRole === 'admin' || $userRole === 'superadmin'): ?>
     <div class="schedule-details-overlay" id="detailsOverlay" onclick="closeDetails()"></div>
-    <div class="schedule-details" id="scheduleDetails">
+    <div class="schedule-details" id="scheduleDetails" style="max-width:520px;">
         <span class="close-details" onclick="closeDetails()">&times;</span>
-        <h3 style="color: #1e3a5f; margin-bottom: 1.5rem; font-size: 1.5rem;">📋 Schedule Details</h3>
-        <div class="details-content" id="detailsContent"></div>
+
+        <div class="admin-modal-views">
+
+            <!-- VIEW 1: Details -->
+            <div class="admin-modal-view active" id="adminViewDetails">
+                <h3 style="color:#1e3a5f;margin-bottom:1.25rem;font-size:1.35rem;">📋 Schedule Details</h3>
+                <div id="detailsContent"></div>
+                <div class="admin-action-footer">
+                    <button class="btn-admin-pullout" onclick="adminShowView('adminViewPullout')">🗑 Pull-out Schedule</button>
+                    <button class="btn-admin-reschedule" onclick="adminShowView('adminViewReschedule')">📅 Reschedule</button>
+                </div>
+            </div>
+
+            <!-- VIEW 2: Pull-out Confirmation -->
+            <div class="admin-modal-view" id="adminViewPullout">
+                <h3 style="color:#e53935;margin-bottom:1.1rem;font-size:1.25rem;">⚠️ Pull-out Schedule</h3>
+                <div class="admin-warning-box">
+                    <span style="font-size:1.4rem;line-height:1;">⚠️</span>
+                    <div><strong>This cannot be undone.</strong>
+                        The schedule will be removed from the calendar and the requestor will be notified.
+                    </div>
+                </div>
+                <p style="font-size:.9rem;color:#374151;margin-bottom:1rem;">
+                    Pulling out: <strong id="adminPulloutTitle" style="color:#1e3a5f;"></strong>
+                </p>
+                <div class="admin-form-group">
+                    <label>Reason <span style="color:#9ca3af;font-weight:400;">(optional)</span></label>
+                    <textarea id="adminPulloutReason" placeholder="e.g. Venue unavailable…"></textarea>
+                </div>
+                <div class="admin-action-footer">
+                    <button class="btn-admin-back" onclick="adminShowView('adminViewDetails')">← Back</button>
+                    <button class="btn-admin-confirm-pullout" onclick="adminSubmitPullout()">🗑 Confirm Pull-out</button>
+                </div>
+            </div>
+
+            <!-- VIEW 3: Reschedule Form -->
+            <div class="admin-modal-view" id="adminViewReschedule">
+                <h3 style="color:#1e3a5f;margin-bottom:1.1rem;font-size:1.25rem;">📅 Reschedule</h3>
+                <div class="admin-current-info" id="adminCurrentInfo"></div>
+                <form id="adminRescheduleForm" method="POST" action="admin/reschedule.php">
+                    <input type="hidden" name="schedule_id" id="adminRescheduleId">
+                    <div class="admin-form-group">
+                        <label>New Date *</label>
+                        <input type="date" name="new_date" id="adminNewDate" min="<?php echo date('Y-m-d'); ?>" required>
+                    </div>
+                    <div class="admin-time-row">
+                        <div class="admin-form-group">
+                            <label>New Start Time *</label>
+                            <input type="time" name="new_start_time" id="adminNewStart" required>
+                        </div>
+                        <div class="admin-form-group">
+                            <label>New End Time *</label>
+                            <input type="time" name="new_end_time" id="adminNewEnd" required>
+                        </div>
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Reason <span style="color:#9ca3af;font-weight:400;">(optional)</span></label>
+                        <textarea name="reason" placeholder="e.g. Conflict with another event…"></textarea>
+                    </div>
+                </form>
+                <div class="admin-action-footer">
+                    <button class="btn-admin-back" onclick="adminShowView('adminViewDetails')">← Back</button>
+                    <button class="btn-admin-confirm-reschedule" onclick="document.getElementById('adminRescheduleForm').submit()">✓ Confirm Reschedule</button>
+                </div>
+            </div>
+
+        </div><!-- /admin-modal-views -->
     </div>
+
+    <!-- Hidden pull-out form (posts to admin/pullout_schedule.php) -->
+    <form id="adminPulloutForm" method="POST" action="admin/pullout_schedule.php" style="display:none;">
+        <input type="hidden" name="schedule_id" id="adminPulloutId">
+        <input type="hidden" name="reason"      id="adminPulloutReasonHidden">
+    </form>
     <?php endif; ?>
     
     <!-- Request Form Modal (for requestors only) -->
@@ -1560,8 +1802,8 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
                 <input type="text" id="request_office" name="office" required placeholder="Enter office name">
             </div>
             <div class="form-group">
-                <label for="request_remarks">📝 Remarks *</label>
-                <textarea id="request_remarks" name="remarks" required placeholder="Additional notes or requirements"></textarea>
+                <label for="request_remarks">📝 Remarks <span style="opacity:.7;font-weight:400;">(optional)</span></label>
+                <textarea id="request_remarks" name="remarks" placeholder="Additional notes or requirements"></textarea>
             </div>
             <div class="form-actions">
                 <button type="button" class="btn-cancel" onclick="closeRequestForm()">Cancel</button>
@@ -1571,7 +1813,77 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
     </div>
     <?php endif; ?>
 
-    <!-- Schedule Already Booked Notification Modal -->
+    <!-- Admin Walk-in Schedule Modal (on calendar) -->
+    <?php if ($userRole === 'admin' || $userRole === 'superadmin'): ?>
+    <div class="cal-add-overlay" id="calAddOverlay" onclick="handleCalAddOverlay(event)">
+        <div class="cal-add-box">
+            <div class="cal-add-header">
+                <span class="cal-add-title">🏃 Add Walk-in Schedule</span>
+                <button class="cal-add-close" onclick="closeAdminAddForm()">&times;</button>
+            </div>
+            <div class="cal-add-body">
+                <div class="cal-walkin-note">
+                    <span style="font-size:1.1rem;">ℹ️</span>
+                    <div>This schedule will be <strong>immediately approved</strong> and appear on the calendar. No prior request needed.</div>
+                </div>
+                <form id="calAddForm" method="POST" action="admin/add_schedule.php">
+                    <input type="hidden" name="redirect" value="../index.php">
+                    <div class="cal-form-group">
+                        <label>📅 Date *</label>
+                        <input type="date" name="start_date" id="calAddDate"
+                               min="<?php echo date('Y-m-d'); ?>" required readonly
+                               style="background:#f8f9fa;">
+                    </div>
+                    <div class="cal-form-group">
+                        <label>📌 Title *</label>
+                        <input type="text" name="title" id="calAddTitle" required
+                               placeholder="e.g. Walk-in Training Session">
+                    </div>
+                    <div class="cal-form-group">
+                        <label>📧 Requestor Email *</label>
+                        <input type="email" name="requestor_email" required
+                               placeholder="e.g. juan.delacruz@deped.gov.ph">
+                    </div>
+                    <div class="cal-time-row">
+                        <div class="cal-form-group">
+                            <label>🕐 Start Time *</label>
+                            <input type="time" name="start_time" id="calAddStart" required>
+                        </div>
+                        <div class="cal-form-group">
+                            <label>🕐 End Time *</label>
+                            <input type="time" name="end_time" id="calAddEnd" required>
+                        </div>
+                    </div>
+                    <div class="cal-form-group">
+                        <label>👥 No. of Participants *</label>
+                        <input type="number" name="participants" min="1" required
+                               placeholder="e.g. 25">
+                    </div>
+                    <div class="cal-form-group">
+                        <label>👤 Program Owner *</label>
+                        <input type="text" name="program_owner" required
+                               placeholder="Name of program owner">
+                    </div>
+                    <div class="cal-form-group">
+                        <label>🏢 Office *</label>
+                        <input type="text" name="office" required
+                               placeholder="Office or division">
+                    </div>
+                    <div class="cal-form-group">
+                        <label>📝 Remarks <span style="color:#9ca3af;font-weight:400;">(optional)</span></label>
+                        <textarea name="remarks" placeholder="Additional notes or requirements..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="cal-add-footer">
+                <button class="btn-cal-cancel2" onclick="closeAdminAddForm()">Cancel</button>
+                <button class="btn-cal-submit" onclick="document.getElementById('calAddForm').submit()">
+                    ✅ Add Schedule
+                </button>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
     <div class="conflict-notification-overlay" id="conflictOverlay"></div>
     <div class="conflict-notification-modal" id="conflictModal">
         <div class="conflict-notification-header">
@@ -1603,10 +1915,10 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
         // Check if user is admin or superadmin
         const isAdmin = <?php echo ($userRole === 'admin' || $userRole === 'superadmin') ? 'true' : 'false'; ?>;
         
-        // Show all schedules for a specific day
+        // Show all schedules for a specific day — clicking ANYWHERE in the cell works
         function showDaySchedules(schedules, dateStr, event) {
-            // Don't show if clicking on a schedule item
-            if (event.target.closest('.schedule-item')) {
+            // Only skip if the add-schedule (+) button was clicked
+            if (event.target.closest('.add-schedule-btn')) {
                 return;
             }
             
@@ -1642,59 +1954,70 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
             document.getElementById('dayListOverlay').classList.add('active');
         }
         
-        // Show detailed schedule information (for admins)
+        // Show detailed schedule information (for admins) — 3-view modal
         function showScheduleDetails(scheduleId) {
-            // Fetch schedule details via AJAX
+            // Reset to details view
+            adminShowView('adminViewDetails');
+            document.getElementById('detailsContent').innerHTML =
+                '<div style="text-align:center;padding:1.5rem;color:#9ca3af;">Loading…</div>';
+
+            closeDayList();
+            document.getElementById('scheduleDetails').classList.add('active');
+            document.getElementById('detailsOverlay').classList.add('active');
+
             fetch(`admin/get_schedule_details.php?id=${scheduleId}`)
-                .then(response => response.json())
+                .then(r => r.json())
                 .then(data => {
-                    if (data.success) {
-                        const schedule = data.schedule;
-                        const startTime = new Date('1970-01-01 ' + schedule.start_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-                        const endTime = new Date('1970-01-01 ' + schedule.end_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-                        const startDate = new Date(schedule.start_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-                        
-                        const content = `
-                            <div class="detail-row">
-                                <span class="detail-label">📅 Date</span>
-                                <span class="detail-value">${startDate}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">📌 Title</span>
-                                <span class="detail-value">${schedule.title}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">🕐 Time</span>
-                                <span class="detail-value">${startTime} - ${endTime}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">👥 Number of Participants</span>
-                                <span class="detail-value">${schedule.participants}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">👤 Program Owner</span>
-                                <span class="detail-value">${schedule.program_owner}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">🏢 Office</span>
-                                <span class="detail-value">${schedule.office}</span>
-                            </div>
-                            <div style="margin-top: 1.5rem; display: flex; gap: 0.75rem;">
-                                <a href="admin/edit_schedule.php?id=${schedule.schedule_id}" style="flex: 1; text-align: center; text-decoration: none; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%); color: white; border-radius: 8px; font-weight: 600; transition: all 0.3s ease;">Edit</a>
-                                <a href="admin/delete_schedule.php?id=${schedule.schedule_id}" style="flex: 1; text-align: center; text-decoration: none; padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); color: white; border-radius: 8px; font-weight: 600; transition: all 0.3s ease;" onclick="return confirm('Are you sure you want to delete this schedule?');">Delete</a>
-                            </div>
-                        `;
-                        
-                        document.getElementById('detailsContent').innerHTML = content;
-                        closeDayList(); // Close the day list
-                        document.getElementById('scheduleDetails').classList.add('active');
-                        document.getElementById('detailsOverlay').classList.add('active');
-                    }
+                    if (!data.success) { closeDetails(); return; }
+                    const s = data.schedule;
+
+                    const fmtDate = dt => {
+                        const d = new Date(dt + 'T00:00:00');
+                        return d.toLocaleDateString('en-PH', {year:'numeric',month:'long',day:'numeric'});
+                    };
+                    const fmtTime = ts => {
+                        const [h,m] = ts.split(':');
+                        const d = new Date(); d.setHours(+h, +m);
+                        return d.toLocaleTimeString('en-PH', {hour:'2-digit',minute:'2-digit',hour12:true});
+                    };
+                    const esc = str => { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; };
+
+                    // Populate details view
+                    document.getElementById('detailsContent').innerHTML = `
+                        <div class="detail-row"><span class="detail-label">📅 Date</span><span class="detail-value">${fmtDate(s.start_date)}</span></div>
+                        <div class="detail-row"><span class="detail-label">📌 Title</span><span class="detail-value">${esc(s.title)}</span></div>
+                        <div class="detail-row"><span class="detail-label">🕐 Time</span><span class="detail-value">${fmtTime(s.start_time)} – ${fmtTime(s.end_time)}</span></div>
+                        <div class="detail-row"><span class="detail-label">👥 Participants</span><span class="detail-value">${esc(s.participants)}</span></div>
+                        <div class="detail-row"><span class="detail-label">👤 Program Owner</span><span class="detail-value">${esc(s.program_owner)}</span></div>
+                        <div class="detail-row"><span class="detail-label">🏢 Office</span><span class="detail-value">${esc(s.office)}</span></div>
+                    `;
+
+                    // Pre-fill pull-out view
+                    document.getElementById('adminPulloutTitle').textContent = s.title;
+                    document.getElementById('adminPulloutId').value          = s.schedule_id;
+                    document.getElementById('adminPulloutReason').value      = '';
+
+                    // Pre-fill reschedule view
+                    document.getElementById('adminRescheduleId').value  = s.schedule_id;
+                    document.getElementById('adminNewDate').value        = s.start_date;
+                    document.getElementById('adminNewStart').value       = s.start_time.substring(0, 5);
+                    document.getElementById('adminNewEnd').value         = s.end_time.substring(0, 5);
+                    document.getElementById('adminCurrentInfo').innerHTML =
+                        `<strong>Current:</strong> ${fmtDate(s.start_date)}, ${fmtTime(s.start_time)} – ${fmtTime(s.end_time)}`;
                 })
-                .catch(error => {
-                    console.error('Error fetching schedule details:', error);
-                    alert('Failed to load schedule details. Please try again.');
-                });
+                .catch(() => { closeDetails(); alert('Failed to load schedule details.'); });
+        }
+
+        // Switch admin modal view
+        function adminShowView(id) {
+            document.querySelectorAll('.admin-modal-view').forEach(v => v.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        // Submit pull-out
+        function adminSubmitPullout() {
+            document.getElementById('adminPulloutReasonHidden').value = document.getElementById('adminPulloutReason').value;
+            document.getElementById('adminPulloutForm').submit();
         }
         
         function closeDayList() {
@@ -1739,14 +2062,17 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
             return false; // No conflict
         }
         
-        // Handle form submission with conflict check
-        document.getElementById('quickRequestForm').addEventListener('submit', function(e) {
-            if (checkTimeConflict()) {
-                e.preventDefault();
-                showConflictNotification();
-                return false;
-            }
-        });
+        // Handle form submission with conflict check (requestors only)
+        const quickRequestForm = document.getElementById('quickRequestForm');
+        if (quickRequestForm) {
+            quickRequestForm.addEventListener('submit', function(e) {
+                if (checkTimeConflict()) {
+                    e.preventDefault();
+                    showConflictNotification();
+                    return false;
+                }
+            });
+        }
         
         // Show conflict notification modal
         function showConflictNotification() {
@@ -1761,7 +2087,10 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
         }
         
         // Close conflict modal when clicking overlay
-        document.getElementById('conflictOverlay').addEventListener('click', closeConflictNotification);
+        const conflictOverlayEl = document.getElementById('conflictOverlay');
+        if (conflictOverlayEl) {
+            conflictOverlayEl.addEventListener('click', closeConflictNotification);
+        }
         
         // Real-time conflict checking as user changes times
         const startTimeInput = document.getElementById('request_start_time');
@@ -1804,11 +2133,34 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
             document.getElementById('quickRequestForm').reset();
         }
 
+        // Open admin walk-in add-schedule form with pre-filled date
+        function openAdminAddForm(date, dateStr) {
+            const overlay = document.getElementById('calAddOverlay');
+            if (!overlay) return;
+            document.getElementById('calAddDate').value = date;
+            overlay.classList.add('open');
+            document.body.style.overflow = 'hidden';
+            setTimeout(() => document.getElementById('calAddTitle').focus(), 200);
+        }
+
+        function closeAdminAddForm() {
+            const overlay = document.getElementById('calAddOverlay');
+            if (!overlay) return;
+            overlay.classList.remove('open');
+            document.body.style.overflow = '';
+            document.getElementById('calAddForm').reset();
+        }
+
+        function handleCalAddOverlay(e) {
+            if (e.target === document.getElementById('calAddOverlay')) closeAdminAddForm();
+        }
+
         // Close on Escape key
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeDetails();
                 closeDayList();
+                closeAdminAddForm();
                 <?php if ($isRequestor): ?>
                 closeRequestForm();
                 <?php endif; ?>
