@@ -22,6 +22,42 @@ $approved_schedules = $conn->query("SELECT * FROM approved_schedules ORDER BY st
     <title>Admin Dashboard - Training Lab Schedule</title>
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../assets/css/sidebar.css">
+    <style>
+        /* Header Profile Link */
+        .header-profile-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .header-profile-link:hover {
+            background: #f3f4f6;
+        }
+        
+        .header-user-avatar {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #4CAF50 0%, #66bb6a 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: white;
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+        
+        .header-user-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1e3a5f;
+        }
+    </style>
 </head>
 <body>
     <div class="app-wrapper">
@@ -37,19 +73,7 @@ $approved_schedules = $conn->query("SELECT * FROM approved_schedules ORDER BY st
                 </a>
             </div>
             
-            <div class="sidebar-user">
-                <div class="sidebar-user-info">
-                    <div class="sidebar-user-avatar">
-                        <?php echo strtoupper(substr($_SESSION['username'], 0, 1)); ?>
-                    </div>
-                    <div class="sidebar-user-details">
-                        <div class="sidebar-user-name"><?php echo htmlspecialchars($_SESSION['username']); ?></div>
-                        <div class="sidebar-user-role"><?php echo ucfirst($_SESSION['role']); ?></div>
-                    </div>
-                </div>
-            </div>
-            
-            <nav class="sidebar-nav">
+            <nav class="sidebar-nav" style="padding-top: 1rem;">
                 <div class="sidebar-nav-section">
                     <div class="sidebar-nav-title">Main Menu</div>
                     <a href="dashboard.php" class="sidebar-nav-item active">
@@ -97,7 +121,12 @@ $approved_schedules = $conn->query("SELECT * FROM approved_schedules ORDER BY st
             <header class="top-header">
                 <div class="top-header-left">
                     <button class="menu-toggle">☰</button>
-                    <h1 class="page-title">Admin Dashboard</h1>
+                    <div class="header-profile-link">
+                        <div class="header-user-avatar">
+                            <?php echo strtoupper(substr($_SESSION['username'], 0, 1)); ?>
+                        </div>
+                        <span class="header-user-name"><?php echo htmlspecialchars($_SESSION['username']); ?></span>
+                    </div>
                 </div>
                 <div class="top-header-right">
                     <span style="color: #6b7280; font-size: 0.9rem;">

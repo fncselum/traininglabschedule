@@ -132,8 +132,9 @@ if ($request['status'] !== 'pending') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Review Request</title>
+    <title>Review Request - Training Lab Schedule</title>
     <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/sidebar.css">
     <script>
         function showRejectForm() {
             document.getElementById('approve-form').style.display = 'none';
@@ -147,112 +148,178 @@ if ($request['status'] !== 'pending') {
     </script>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <h1>Training Laboratory Schedule</h1>
-            <nav>
-                <span style="color: white; margin-right: 1rem;">Welcome, <?php echo htmlspecialchars($_SESSION['username']); ?></span>
-                <a href="../logout.php" class="btn-login">Logout</a>
-            </nav>
-        </div>
-    </header>
-
-    <main class="container">
-        <div class="dashboard-header">
-            <h2>Review Schedule Request</h2>
-        </div>
-
-        <div class="dashboard-nav">
-            <a href="dashboard.php">Dashboard</a>
-            <a href="pending_requests.php" class="active">Pending Requests</a>
-            <a href="approved_schedules.php">Manage Schedules</a>
-        </div>
-
-        <?php if ($success): ?>
-            <div class="alert alert-success"><?php echo htmlspecialchars($success); ?></div>
-            <a href="dashboard.php" class="btn btn-primary">Back to Dashboard</a>
-        <?php else: ?>
-            <?php if ($error): ?>
-                <div class="alert alert-error"><?php echo htmlspecialchars($error); ?></div>
-            <?php endif; ?>
+    <div class="app-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="dashboard.php" class="sidebar-logo">
+                    <div class="sidebar-logo-icon">🔬</div>
+                    <div class="sidebar-logo-text">
+                        <span class="sidebar-logo-title">Training Lab</span>
+                        <span class="sidebar-logo-subtitle">Schedule System</span>
+                    </div>
+                </a>
+            </div>
             
-            <div class="card">
-                <div class="card-header">
-                    <h3>Request Details</h3>
-                    <p style="margin: 0.5rem 0 0 0; color: #7f8c8d;">Submitted by: <?php echo htmlspecialchars($request['username']); ?> on <?php echo date('F d, Y h:i A', strtotime($request['created_at'])); ?></p>
-                </div>
-
-                <div id="approve-form">
-                    <form method="POST" action="">
-                        <input type="hidden" name="action" value="approve">
-                        
-                        <div class="form-group">
-                            <label for="start_date">Start Date *</label>
-                            <input type="date" id="start_date" name="start_date" value="<?php echo $request['start_date']; ?>" required min="<?php echo date('Y-m-d'); ?>">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="title">Training Title *</label>
-                            <input type="text" id="title" name="title" value="<?php echo htmlspecialchars($request['title']); ?>" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="start_time">Start Time *</label>
-                            <input type="time" id="start_time" name="start_time" value="<?php echo $request['start_time']; ?>" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="end_time">End Time *</label>
-                            <input type="time" id="end_time" name="end_time" value="<?php echo $request['end_time']; ?>" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="participants">Participants *</label>
-                            <textarea id="participants" name="participants" required><?php echo htmlspecialchars($request['participants']); ?></textarea>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="program_owner">Program Owner *</label>
-                            <input type="text" id="program_owner" name="program_owner" value="<?php echo htmlspecialchars($request['program_owner']); ?>" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="office">Office *</label>
-                            <input type="text" id="office" name="office" value="<?php echo htmlspecialchars($request['office']); ?>" required>
-                        </div>
-                        
-                        <div class="action-buttons">
-                            <button type="submit" class="btn btn-success">Approve Request</button>
-                            <button type="button" class="btn btn-danger" onclick="showRejectForm()">Reject Request</button>
-                            <a href="dashboard.php" class="btn btn-secondary">Cancel</a>
-                        </div>
-                    </form>
-                </div>
-
-                <div id="reject-form" style="display: none;">
-                    <form method="POST" action="">
-                        <input type="hidden" name="action" value="reject">
-                        
-                        <div class="form-group">
-                            <label for="rejection_reason">Rejection Reason *</label>
-                            <textarea id="rejection_reason" name="rejection_reason" required placeholder="Please provide a reason for rejecting this request"></textarea>
-                        </div>
-                        
-                        <div class="action-buttons">
-                            <button type="submit" class="btn btn-danger">Confirm Rejection</button>
-                            <button type="button" class="btn btn-secondary" onclick="showApproveForm()">Cancel</button>
-                        </div>
-                    </form>
+            <div class="sidebar-user">
+                <div class="sidebar-user-info">
+                    <div class="sidebar-user-avatar">
+                        <?php echo strtoupper(substr($_SESSION['username'], 0, 1)); ?>
+                    </div>
+                    <div class="sidebar-user-details">
+                        <div class="sidebar-user-name"><?php echo htmlspecialchars($_SESSION['username']); ?></div>
+                        <div class="sidebar-user-role"><?php echo ucfirst($_SESSION['role']); ?></div>
+                    </div>
                 </div>
             </div>
-        <?php endif; ?>
-    </main>
+            
+            <nav class="sidebar-nav">
+                <div class="sidebar-nav-section">
+                    <div class="sidebar-nav-title">Main Menu</div>
+                    <a href="dashboard.php" class="sidebar-nav-item">
+                        <span class="sidebar-nav-icon">📊</span>
+                        <span class="sidebar-nav-text">Dashboard</span>
+                    </a>
+                    <a href="pending_requests.php" class="sidebar-nav-item active">
+                        <span class="sidebar-nav-icon">⏳</span>
+                        <span class="sidebar-nav-text">Pending Requests</span>
+                    </a>
+                    <a href="approved_schedules.php" class="sidebar-nav-item">
+                        <span class="sidebar-nav-icon">✅</span>
+                        <span class="sidebar-nav-text">Manage Schedules</span>
+                    </a>
+                    <a href="../index.php" class="sidebar-nav-item">
+                        <span class="sidebar-nav-icon">📅</span>
+                        <span class="sidebar-nav-text">Public Schedule</span>
+                    </a>
+                </div>
+                
+                <?php if ($_SESSION['role'] === 'superadmin'): ?>
+                <div class="sidebar-nav-section">
+                    <div class="sidebar-nav-title">Administration</div>
+                    <a href="../superadmin/manage_users.php" class="sidebar-nav-item">
+                        <span class="sidebar-nav-icon">👥</span>
+                        <span class="sidebar-nav-text">Manage Users</span>
+                    </a>
+                </div>
+                <?php endif; ?>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <a href="../logout.php" class="sidebar-logout">
+                    <span class="sidebar-logout-icon">🚪</span>
+                    <span class="sidebar-nav-text">Logout</span>
+                </a>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <header class="top-header">
+                <div class="top-header-left">
+                    <button class="menu-toggle">☰</button>
+                    <h1 class="page-title">Review Request</h1>
+                </div>
+                <div class="top-header-right">
+                    <span style="color: #6b7280; font-size: 0.9rem;">
+                        <?php echo date('l, F d, Y'); ?>
+                    </span>
+                </div>
+            </header>
+            
+            <main class="content-wrapper">
 
-    <footer>
-        <div class="container">
-            <p>&copy; <?php echo date('Y'); ?> Training Laboratory Schedule System</p>
+                <?php if ($success): ?>
+                    <div class="content-card">
+                        <div class="content-card-body">
+                            <div class="alert alert-success"><?php echo htmlspecialchars($success); ?></div>
+                            <a href="dashboard.php" class="btn btn-primary">Back to Dashboard</a>
+                        </div>
+                    </div>
+                <?php else: ?>
+                    <?php if ($error): ?>
+                        <div class="alert alert-error"><?php echo htmlspecialchars($error); ?></div>
+                    <?php endif; ?>
+                    
+                    <div class="content-card">
+                        <div class="content-card-header">
+                            <h3 class="content-card-title">Request Details</h3>
+                            <p style="margin: 0.5rem 0 0 0; color: #7f8c8d;">Submitted by: <?php echo htmlspecialchars($request['username']); ?> on <?php echo date('F d, Y h:i A', strtotime($request['created_at'])); ?></p>
+                        </div>
+                        <div class="content-card-body">
+                            <div id="approve-form">
+                                <form method="POST" action="">
+                                    <input type="hidden" name="action" value="approve">
+                                    
+                                    <div class="form-group">
+                                        <label for="start_date">Start Date *</label>
+                                        <input type="date" id="start_date" name="start_date" value="<?php echo $request['start_date']; ?>" required min="<?php echo date('Y-m-d'); ?>">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="title">Training Title *</label>
+                                        <input type="text" id="title" name="title" value="<?php echo htmlspecialchars($request['title']); ?>" required>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="start_time">Start Time *</label>
+                                        <input type="time" id="start_time" name="start_time" value="<?php echo $request['start_time']; ?>" required>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="end_time">End Time *</label>
+                                        <input type="time" id="end_time" name="end_time" value="<?php echo $request['end_time']; ?>" required>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="participants">Participants *</label>
+                                        <textarea id="participants" name="participants" required><?php echo htmlspecialchars($request['participants']); ?></textarea>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="program_owner">Program Owner *</label>
+                                        <input type="text" id="program_owner" name="program_owner" value="<?php echo htmlspecialchars($request['program_owner']); ?>" required>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="office">Office *</label>
+                                        <input type="text" id="office" name="office" value="<?php echo htmlspecialchars($request['office']); ?>" required>
+                                    </div>
+                                    
+                                    <div class="action-buttons">
+                                        <button type="submit" class="btn btn-success">Approve Request</button>
+                                        <button type="button" class="btn btn-danger" onclick="showRejectForm()">Reject Request</button>
+                                        <a href="dashboard.php" class="btn btn-secondary">Cancel</a>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <div id="reject-form" style="display: none;">
+                                <form method="POST" action="">
+                                    <input type="hidden" name="action" value="reject">
+                                    
+                                    <div class="form-group">
+                                        <label for="rejection_reason">Rejection Reason *</label>
+                                        <textarea id="rejection_reason" name="rejection_reason" required placeholder="Please provide a reason for rejecting this request"></textarea>
+                                    </div>
+                                    
+                                    <div class="action-buttons">
+                                        <button type="submit" class="btn btn-danger">Confirm Rejection</button>
+                                        <button type="button" class="btn btn-secondary" onclick="showApproveForm()">Cancel</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                <?php endif; ?>
+            </main>
         </div>
-    </footer>
+    </div>
+    
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay"></div>
+    
+    <script src="../assets/js/sidebar.js"></script>
 </body>
 </html>
 

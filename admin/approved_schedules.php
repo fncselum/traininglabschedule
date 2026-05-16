@@ -13,81 +13,145 @@ $approved_schedules = $conn->query("SELECT * FROM approved_schedules ORDER BY st
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Approved Schedules</title>
+    <title>Manage Schedules - Training Lab Schedule</title>
     <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/sidebar.css">
+    <style>
+        .header-profile-link { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 1rem; border-radius: 10px; transition: all 0.3s ease; }
+        .header-profile-link:hover { background: #f3f4f6; }
+        .header-user-avatar { width: 45px; height: 45px; background: linear-gradient(135deg, #4CAF50 0%, #66bb6a 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; font-weight: 700; color: white; box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3); }
+        .header-user-name { font-size: 1.1rem; font-weight: 600; color: #1e3a5f; }
+    </style>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <h1>Training Laboratory Schedule</h1>
-            <nav>
-                <span style="color: white; margin-right: 1rem;">Welcome, <?php echo htmlspecialchars($_SESSION['username']); ?></span>
-                <a href="../logout.php" class="btn-login">Logout</a>
-            </nav>
-        </div>
-    </header>
-
-    <main class="container">
-        <div class="dashboard-header">
-            <h2>Approved Schedules</h2>
-        </div>
-
-        <div class="dashboard-nav">
-            <a href="dashboard.php">Dashboard</a>
-            <a href="pending_requests.php">Pending Requests</a>
-            <a href="approved_schedules.php" class="active">Manage Schedules</a>
-            <a href="../index.php">View Public Schedule</a>
-        </div>
-
-        <div class="card">
-            <?php if ($approved_schedules->num_rows > 0): ?>
-                <div class="table-responsive">
-                    <table class="schedule-table">
-                        <thead>
-                            <tr>
-                                <th>Start Date</th>
-                                <th>Title</th>
-                                <th>Time</th>
-                                <th>Participants</th>
-                                <th>Program Owner</th>
-                                <th>Office</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php while ($row = $approved_schedules->fetch_assoc()): ?>
-                                <tr>
-                                    <td><?php echo date('M d, Y', strtotime($row['start_date'])); ?></td>
-                                    <td><?php echo htmlspecialchars($row['title']); ?></td>
-                                    <td>
-                                        <?php echo date('h:i A', strtotime($row['start_time'])); ?> - 
-                                        <?php echo date('h:i A', strtotime($row['end_time'])); ?>
-                                    </td>
-                                    <td><?php echo htmlspecialchars(substr($row['participants'], 0, 50)); ?><?php echo strlen($row['participants']) > 50 ? '...' : ''; ?></td>
-                                    <td><?php echo htmlspecialchars($row['program_owner']); ?></td>
-                                    <td><?php echo htmlspecialchars($row['office']); ?></td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <a href="edit_schedule.php?id=<?php echo $row['schedule_id']; ?>" class="btn btn-warning">Edit</a>
-                                            <a href="delete_schedule.php?id=<?php echo $row['schedule_id']; ?>" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this schedule?');">Delete</a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            <?php endwhile; ?>
-                        </tbody>
-                    </table>
+    <div class="app-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="dashboard.php" class="sidebar-logo">
+                    <div class="sidebar-logo-icon">🔬</div>
+                    <div class="sidebar-logo-text">
+                        <span class="sidebar-logo-title">Training Lab</span>
+                        <span class="sidebar-logo-subtitle">Schedule System</span>
+                    </div>
+                </a>
+            </div>
+            
+            <nav class="sidebar-nav" style="padding-top: 1rem;">
+                <div class="sidebar-nav-section">
+                    <div class="sidebar-nav-title">Main Menu</div>
+                    <a href="dashboard.php" class="sidebar-nav-item">
+                        <span class="sidebar-nav-icon">📊</span>
+                        <span class="sidebar-nav-text">Dashboard</span>
+                    </a>
+                    <a href="pending_requests.php" class="sidebar-nav-item">
+                        <span class="sidebar-nav-icon">⏳</span>
+                        <span class="sidebar-nav-text">Pending Requests</span>
+                    </a>
+                    <a href="approved_schedules.php" class="sidebar-nav-item active">
+                        <span class="sidebar-nav-icon">✅</span>
+                        <span class="sidebar-nav-text">Manage Schedules</span>
+                    </a>
+                    <a href="../index.php" class="sidebar-nav-item">
+                        <span class="sidebar-nav-icon">📅</span>
+                        <span class="sidebar-nav-text">Public Schedule</span>
+                    </a>
                 </div>
-            <?php else: ?>
-                <p class="no-data">No approved schedules yet.</p>
-            <?php endif; ?>
+                
+                <?php if ($_SESSION['role'] === 'superadmin'): ?>
+                <div class="sidebar-nav-section">
+                    <div class="sidebar-nav-title">Administration</div>
+                    <a href="../superadmin/manage_users.php" class="sidebar-nav-item">
+                        <span class="sidebar-nav-icon">👥</span>
+                        <span class="sidebar-nav-text">Manage Users</span>
+                    </a>
+                </div>
+                <?php endif; ?>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <a href="../logout.php" class="sidebar-logout">
+                    <span class="sidebar-logout-icon">🚪</span>
+                    <span class="sidebar-nav-text">Logout</span>
+                </a>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <header class="top-header">
+                <div class="top-header-left">
+                    <button class="menu-toggle">☰</button>
+                    <div class="header-profile-link">
+                        <div class="header-user-avatar">
+                            <?php echo strtoupper(substr($_SESSION['username'], 0, 1)); ?>
+                        </div>
+                        <span class="header-user-name"><?php echo htmlspecialchars($_SESSION['username']); ?></span>
+                    </div>
+                </div>
+                <div class="top-header-right">
+                    <span style="color: #6b7280; font-size: 0.9rem;">
+                        <?php echo date('l, F d, Y'); ?>
+                    </span>
+                </div>
+            </header>
+            
+            <main class="content-wrapper">
+                <div class="content-card">
+                    <div class="content-card-header">
+                        <h3 class="content-card-title">Approved Schedules (<?php echo $approved_schedules->num_rows; ?>)</h3>
+                    </div>
+                    <div class="content-card-body">
+                        <?php if ($approved_schedules->num_rows > 0): ?>
+                            <div class="table-responsive">
+                                <table class="schedule-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Start Date</th>
+                                            <th>Title</th>
+                                            <th>Time</th>
+                                            <th>Participants</th>
+                                            <th>Program Owner</th>
+                                            <th>Office</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php while ($row = $approved_schedules->fetch_assoc()): ?>
+                                            <tr>
+                                                <td><?php echo date('M d, Y', strtotime($row['start_date'])); ?></td>
+                                                <td><?php echo htmlspecialchars($row['title']); ?></td>
+                                                <td>
+                                                    <?php echo date('h:i A', strtotime($row['start_time'])); ?> - 
+                                                    <?php echo date('h:i A', strtotime($row['end_time'])); ?>
+                                                </td>
+                                                <td><?php echo htmlspecialchars(substr($row['participants'], 0, 50)); ?><?php echo strlen($row['participants']) > 50 ? '...' : ''; ?></td>
+                                                <td><?php echo htmlspecialchars($row['program_owner']); ?></td>
+                                                <td><?php echo htmlspecialchars($row['office']); ?></td>
+                                                <td>
+                                                    <div class="action-buttons">
+                                                        <a href="edit_schedule.php?id=<?php echo $row['schedule_id']; ?>" class="btn btn-warning btn-sm">Edit</a>
+                                                        <a href="delete_schedule.php?id=<?php echo $row['schedule_id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this schedule?');">Delete</a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        <?php endwhile; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <?php else: ?>
+                            <p class="no-data">No approved schedules yet.</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </main>
         </div>
-    </main>
-
-    <footer>
-        <div class="container">
-            <p>&copy; <?php echo date('Y'); ?> Training Laboratory Schedule System</p>
-        </div>
-    </footer>
+    </div>
+    
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay"></div>
+    
+    <script src="../assets/js/sidebar.js"></script>
 </body>
 </html>
 

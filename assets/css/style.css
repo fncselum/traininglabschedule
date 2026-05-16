@@ -103,10 +103,14 @@ main {
     overflow-x: auto;
     border-radius: 12px;
     box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    max-width: 100%;
 }
 
 .schedule-table {
     width: 100%;
+    min-width: 100%;
     border-collapse: separate;
     border-spacing: 0;
     margin-top: 1rem;
@@ -118,12 +122,13 @@ main {
 }
 
 .schedule-table th {
-    padding: 16px;
+    padding: 1rem;
     text-align: left;
     font-weight: 600;
     text-transform: uppercase;
     font-size: 0.85rem;
     letter-spacing: 0.5px;
+    white-space: nowrap;
 }
 
 .schedule-table th:first-child {
@@ -135,9 +140,11 @@ main {
 }
 
 .schedule-table td {
-    padding: 16px;
+    padding: 1rem;
     text-align: left;
     border-bottom: 1px solid #e8f5e9;
+    word-wrap: break-word;
+    max-width: 300px;
 }
 
 .schedule-table tbody tr {
@@ -147,7 +154,7 @@ main {
 
 .schedule-table tbody tr:hover {
     background: linear-gradient(90deg, #f1f8f4 0%, #e8f5e9 100%);
-    transform: scale(1.01);
+    transform: scale(1.005);
     box-shadow: 0 4px 12px rgba(46, 125, 50, 0.1);
 }
 
@@ -180,6 +187,8 @@ footer {
 /* Forms */
 .form-group {
     margin-bottom: 1.5rem;
+    width: 100%;
+    max-width: 100%;
 }
 
 .form-group label {
@@ -194,12 +203,14 @@ footer {
 .form-group select,
 .form-group textarea {
     width: 100%;
+    max-width: 100%;
     padding: 0.85rem;
     border: 2px solid #e0e0e0;
     border-radius: 10px;
     font-size: 1rem;
     transition: all 0.3s ease;
     background: white;
+    box-sizing: border-box;
 }
 
 .form-group textarea {
@@ -739,6 +750,17 @@ footer {
     footer {
         padding: 1rem 0;
         font-size: 0.85rem;
+    }
+    
+    /* Action buttons stack on mobile */
+    .action-buttons {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .action-buttons .btn {
+        width: 100%;
+        padding: 0.75rem;
     }
 }
 

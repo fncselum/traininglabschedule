@@ -8,6 +8,7 @@ USE traininglab;
 CREATE TABLE IF NOT EXISTS users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE,
     password VARCHAR(255) NOT NULL,
     role ENUM('requestor', 'admin', 'superadmin') NOT NULL,
     status ENUM('active', 'inactive') DEFAULT 'active',
@@ -19,6 +20,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS schedule_requests (
     request_id INT AUTO_INCREMENT PRIMARY KEY,
     requestor_id INT NOT NULL,
+    deped_email VARCHAR(100) NOT NULL,
     start_date DATE NOT NULL,
     title VARCHAR(255) NOT NULL,
     start_time TIME NOT NULL,
@@ -26,6 +28,7 @@ CREATE TABLE IF NOT EXISTS schedule_requests (
     participants TEXT NOT NULL,
     program_owner VARCHAR(100) NOT NULL,
     office VARCHAR(100) NOT NULL,
+    remarks TEXT,
     status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
     rejection_reason TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -63,13 +66,30 @@ CREATE TABLE IF NOT EXISTS notifications (
 );
 
 -- Insert default superadmin account (password: deped1234)
-INSERT INTO users (username, password, role, status) 
-VALUES ('superadmin', '$2y$10$oWPWbO6upFUlSDppC/HJxeezD7Mb4roNGzvh7VRVvyM5ef3TlkAVi', 'superadmin', 'active');
+INSERT INTO users (username, email, password, role, status) 
+VALUES ('superadmin', 'superadmin@traininglab.edu', '$2y$10$oWPWbO6upFUlSDppC/HJxeezD7Mb4roNGzvh7VRVvyM5ef3TlkAVi', 'superadmin', 'active');
 
 -- Insert sample admin account (password: deped1234)
-INSERT INTO users (username, password, role, status) 
-VALUES ('admin', '$2y$10$oWPWbO6upFUlSDppC/HJxeezD7Mb4roNGzvh7VRVvyM5ef3TlkAVi', 'admin', 'active');
+INSERT INTO users (username, email, password, role, status) 
+VALUES ('admin', 'admin@traininglab.edu', '$2y$10$oWPWbO6upFUlSDppC/HJxeezD7Mb4roNGzvh7VRVvyM5ef3TlkAVi', 'admin', 'active');
 
 -- Insert sample requestor account (password: deped1234)
-INSERT INTO users (username, password, role, status) 
-VALUES ('requestor', '$2y$10$oWPWbO6upFUlSDppC/HJxeezD7Mb4roNGzvh7VRVvyM5ef3TlkAVi', 'requestor', 'active');
+INSERT INTO users (username, email, password, role, status) 
+VALUES ('requestor', 'requestor@traininglab.edu', '$2y$10$oWPWbO6upFUlSDppC/HJxeezD7Mb4roNGzvh7VRVvyM5ef3TlkAVi', 'requestor', 'active');
+
+-- ============================================
+-- MIGRATION SCRIPT FOR EXISTING DATABASES
+-- Run these commands if you already have the database set up
+-- ============================================
+
+-- Add email column to users table if it doesn't exist
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(100) UNIQUE AFTER username;
+
+-- Add remarks column to schedule_requests table if it doesn't exist
+ALTER TABLE schedule_requests ADD COLUMN IF NOT EXISTS remarks TEXT AFTER office;
+
+-- Add deped_email column to schedule_requests table if it doesn't exist
+ALTER TABLE schedule_requests ADD COLUMN IF NOT EXISTS deped_email VARCHAR(100) NOT NULL AFTER requestor_id;
+
+-- Update existing users with default email addresses (modify as needed)
+UPDATE users SET email = CONCAT(username, '@traininglab.edu') WHERE email IS NULL;

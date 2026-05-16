@@ -61,79 +61,148 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create User</title>
+    <title>Create User - Training Lab Schedule</title>
     <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/sidebar.css">
 </head>
 <body>
-    <header>
-        <div class="container">
-            <h1>Training Laboratory Schedule</h1>
-            <nav>
-                <span style="color: white; margin-right: 1rem;">Welcome, <?php echo htmlspecialchars($_SESSION['username']); ?></span>
-                <a href="../logout.php" class="btn-login">Logout</a>
-            </nav>
-        </div>
-    </header>
-
-    <main class="container">
-        <div class="dashboard-header">
-            <h2>Create New User</h2>
-        </div>
-
-        <div class="dashboard-nav">
-            <a href="../admin/dashboard.php">Dashboard</a>
-            <a href="manage_users.php" class="active">Manage Users</a>
-        </div>
-
-        <div class="card">
-            <?php if ($success): ?>
-                <div class="alert alert-success"><?php echo htmlspecialchars($success); ?></div>
-                <a href="manage_users.php" class="btn btn-primary">Back to User Management</a>
-            <?php else: ?>
-                <?php if ($error): ?>
-                    <div class="alert alert-error"><?php echo htmlspecialchars($error); ?></div>
-                <?php endif; ?>
+    <div class="app-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="dashboard.php" class="sidebar-logo">
+                    <div class="sidebar-logo-icon">🔬</div>
+                    <div class="sidebar-logo-text">
+                        <span class="sidebar-logo-title">Training Lab</span>
+                        <span class="sidebar-logo-subtitle">Schedule System</span>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="sidebar-user">
+                <div class="sidebar-user-info">
+                    <div class="sidebar-user-avatar">
+                        <?php echo strtoupper(substr($_SESSION['username'], 0, 1)); ?>
+                    </div>
+                    <div class="sidebar-user-details">
+                        <div class="sidebar-user-name"><?php echo htmlspecialchars($_SESSION['username']); ?></div>
+                        <div class="sidebar-user-role">Super Admin</div>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="sidebar-nav-section">
+                    <div class="sidebar-nav-title">Main Menu</div>
+                    <a href="dashboard.php" class="sidebar-nav-item">
+                        <span class="sidebar-nav-icon">📊</span>
+                        <span class="sidebar-nav-text">Dashboard</span>
+                    </a>
+                    <a href="../admin/pending_requests.php" class="sidebar-nav-item">
+                        <span class="sidebar-nav-icon">⏳</span>
+                        <span class="sidebar-nav-text">Pending Requests</span>
+                    </a>
+                    <a href="../admin/approved_schedules.php" class="sidebar-nav-item">
+                        <span class="sidebar-nav-icon">✅</span>
+                        <span class="sidebar-nav-text">Manage Schedules</span>
+                    </a>
+                    <a href="../index.php" class="sidebar-nav-item">
+                        <span class="sidebar-nav-icon">📅</span>
+                        <span class="sidebar-nav-text">Public Schedule</span>
+                    </a>
+                </div>
                 
-                <form method="POST" action="">
-                    <div class="form-group">
-                        <label for="username">Username *</label>
-                        <input type="text" id="username" name="username" required>
+                <div class="sidebar-nav-section">
+                    <div class="sidebar-nav-title">Administration</div>
+                    <a href="manage_users.php" class="sidebar-nav-item">
+                        <span class="sidebar-nav-icon">👥</span>
+                        <span class="sidebar-nav-text">Manage Users</span>
+                    </a>
+                    <a href="create_user.php" class="sidebar-nav-item active">
+                        <span class="sidebar-nav-icon">➕</span>
+                        <span class="sidebar-nav-text">Create User</span>
+                    </a>
+                </div>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <a href="../logout.php" class="sidebar-logout">
+                    <span class="sidebar-logout-icon">🚪</span>
+                    <span class="sidebar-nav-text">Logout</span>
+                </a>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <header class="top-header">
+                <div class="top-header-left">
+                    <button class="menu-toggle">☰</button>
+                    <h1 class="page-title">Create New User</h1>
+                </div>
+                <div class="top-header-right">
+                    <span style="color: #6b7280; font-size: 0.9rem;">
+                        <?php echo date('l, F d, Y'); ?>
+                    </span>
+                </div>
+            </header>
+            
+            <main class="content-wrapper">
+                <div class="content-card">
+                    <div class="content-card-header">
+                        <h3 class="content-card-title">User Information</h3>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="password">Password *</label>
-                        <input type="password" id="password" name="password" required minlength="6">
-                        <small style="color: #7f8c8d;">Minimum 6 characters</small>
+                    <div class="content-card-body">
+                        <?php if ($success): ?>
+                            <div class="alert alert-success"><?php echo htmlspecialchars($success); ?></div>
+                            <a href="manage_users.php" class="btn btn-primary">Back to User Management</a>
+                        <?php else: ?>
+                            <?php if ($error): ?>
+                                <div class="alert alert-error"><?php echo htmlspecialchars($error); ?></div>
+                            <?php endif; ?>
+                            
+                            <form method="POST" action="">
+                                <div class="form-group">
+                                    <label for="username">Username *</label>
+                                    <input type="text" id="username" name="username" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="password">Password *</label>
+                                    <input type="password" id="password" name="password" required minlength="6">
+                                    <small style="color: #7f8c8d;">Minimum 6 characters</small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="confirm_password">Confirm Password *</label>
+                                    <input type="password" id="confirm_password" name="confirm_password" required minlength="6">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="role">Role *</label>
+                                    <select id="role" name="role" required>
+                                        <option value="">Select Role</option>
+                                        <option value="requestor">Requestor</option>
+                                        <option value="admin">Admin</option>
+                                        <option value="superadmin">Superadmin</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="action-buttons">
+                                    <button type="submit" class="btn btn-success">Create User</button>
+                                    <a href="manage_users.php" class="btn btn-secondary">Cancel</a>
+                                </div>
+                            </form>
+                        <?php endif; ?>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="confirm_password">Confirm Password *</label>
-                        <input type="password" id="confirm_password" name="confirm_password" required minlength="6">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="role">Role *</label>
-                        <select id="role" name="role" required>
-                            <option value="">Select Role</option>
-                            <option value="requestor">Requestor</option>
-                            <option value="admin">Admin</option>
-                            <option value="superadmin">Superadmin</option>
-                        </select>
-                    </div>
-                    
-                    <div class="action-buttons">
-                        <button type="submit" class="btn btn-success">Create User</button>
-                        <a href="manage_users.php" class="btn btn-secondary">Cancel</a>
-                    </div>
-                </form>
-            <?php endif; ?>
+                </div>
+            </main>
         </div>
-    </main>
-
-    <footer>
-        <div class="container">
-            <p>&copy; <?php echo date('Y'); ?> Training Laboratory Schedule System</p>
-        </div>
-    </footer>
+    </div>
+    
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay"></div>
+    
+    <script src="../assets/js/sidebar.js"></script>
 </body>
 </html>

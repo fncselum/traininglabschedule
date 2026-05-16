@@ -8,6 +8,7 @@ $success = '';
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $deped_email = trim($_POST['deped_email']);
     $start_date = $_POST['start_date'];
     $title = trim($_POST['title']);
     $start_time = $_POST['start_time'];
@@ -15,12 +16,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $participants = trim($_POST['participants']);
     $program_owner = trim($_POST['program_owner']);
     $office = trim($_POST['office']);
+    $remarks = trim($_POST['remarks']);
     $user_id = $_SESSION['user_id'];
     
     // Validation
-    if (empty($start_date) || empty($title) || empty($start_time) || empty($end_time) || 
-        empty($participants) || empty($program_owner) || empty($office)) {
+    if (empty($deped_email) || empty($start_date) || empty($title) || empty($start_time) || empty($end_time) || 
+        empty($participants) || empty($program_owner) || empty($office) || empty($remarks)) {
         $error = 'All fields are required.';
+    } elseif (!preg_match('/@deped\.gov\.ph$/', $deped_email)) {
+        $error = 'Please enter a valid DepEd email address (@deped.gov.ph).';
     } elseif (strtotime($start_date) < strtotime(date('Y-m-d'))) {
         $error = 'Start date cannot be in the past.';
     } elseif (strtotime($start_time) >= strtotime($end_time)) {
@@ -28,33 +32,79 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $conn = getDBConnection();
         
-        // Insert schedule request
-        $stmt = $conn->prepare("INSERT INTO schedule_requests (requestor_id, start_date, title, start_time, end_time, participants, program_owner, office, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')");
-        $stmt->bind_param("isssssss", $user_id, $start_date, $title, $start_time, $end_time, $participants, $program_owner, $office);
+        // Check for time conflicts with existing approved schedules on the same date
+        $conflict_check = $conn->prepare("
+            SELECT COUNT(*) as conflict_count 
+            FROM approved_schedules 
+            WHERE start_date = ? 
+            AND (
+                (start_time <= ? AND end_time > ?) OR
+                (start_time < ? AND end_time >= ?) OR
+                (start_time >= ? AND end_time <= ?)
+            )
+        ");
+        $conflict_check->bind_param("sssssss", $start_date, $start_time, $start_time, $end_time, $end_time, $start_time, $end_time);
+        $conflict_check->execute();
+        $conflict_result = $conflict_check->get_result();
+        $conflict_data = $conflict_result->fetch_assoc();
+        $has_conflict = $conflict_data['conflict_count'] > 0;
+        $conflict_check->close();
         
-        if ($stmt->execute()) {
-            // Notify all admins
-            $admin_stmt = $conn->prepare("SELECT user_id FROM users WHERE role IN ('admin', 'superadmin')");
-            $admin_stmt->execute();
-            $admins = $admin_stmt->get_result();
+        // Determine status: auto-approve if no conflict, pending if conflict exists
+        $status = $has_conflict ? 'pending' : 'approved';
+        
+        // Start transaction
+        $conn->begin_transaction();
+        
+        try {
+            // Insert schedule request
+            $stmt = $conn->prepare("INSERT INTO schedule_requests (requestor_id, deped_email, start_date, title, start_time, end_time, participants, program_owner, office, remarks, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("issssssssss", $user_id, $deped_email, $start_date, $title, $start_time, $end_time, $participants, $program_owner, $office, $remarks, $status);
+            $stmt->execute();
+            $request_id = $conn->insert_id;
             
-            $notif_stmt = $conn->prepare("INSERT INTO notifications (user_id, message, type) VALUES (?, ?, 'request_submitted')");
-            $message = "New schedule request submitted by " . $_SESSION['username'] . " for " . $title;
-            
-            while ($admin = $admins->fetch_assoc()) {
-                $notif_stmt->bind_param("is", $admin['user_id'], $message);
+            if ($status === 'approved') {
+                // Auto-approve: Insert directly into approved_schedules
+                $approve_stmt = $conn->prepare("INSERT INTO approved_schedules (request_id, start_date, title, start_time, end_time, participants, program_owner, office, approved_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                $approve_stmt->bind_param("isssssssi", $request_id, $start_date, $title, $start_time, $end_time, $participants, $program_owner, $office, $user_id);
+                $approve_stmt->execute();
+                $approve_stmt->close();
+                
+                // Notify requestor of auto-approval
+                $notif_stmt = $conn->prepare("INSERT INTO notifications (user_id, message, type) VALUES (?, ?, 'request_approved')");
+                $message = "Your schedule request for '" . $title . "' has been automatically approved! No time conflicts detected.";
+                $notif_stmt->bind_param("is", $user_id, $message);
                 $notif_stmt->execute();
+                $notif_stmt->close();
+                
+                $success = 'Schedule request automatically approved! No time conflicts detected.';
+            } else {
+                // Notify all admins about pending request (conflict detected)
+                $admin_stmt = $conn->prepare("SELECT user_id FROM users WHERE role IN ('admin', 'superadmin')");
+                $admin_stmt->execute();
+                $admins = $admin_stmt->get_result();
+                
+                $notif_stmt = $conn->prepare("INSERT INTO notifications (user_id, message, type) VALUES (?, ?, 'request_submitted')");
+                $message = "New schedule request submitted by " . $_SESSION['username'] . " for " . $title . " (Time conflict detected - requires review)";
+                
+                while ($admin = $admins->fetch_assoc()) {
+                    $notif_stmt->bind_param("is", $admin['user_id'], $message);
+                    $notif_stmt->execute();
+                }
+                
+                $admin_stmt->close();
+                $notif_stmt->close();
+                
+                $success = 'Schedule request submitted for admin review. A time conflict was detected with an existing schedule.';
             }
             
-            $success = 'Schedule request submitted successfully!';
-            
-            $admin_stmt->close();
-            $notif_stmt->close();
-        } else {
+            $conn->commit();
+            $stmt->close();
+        } catch (Exception $e) {
+            $conn->rollback();
             $error = 'Failed to submit request. Please try again.';
         }
         
-        $stmt->close();
         closeDBConnection($conn);
     }
 }
@@ -68,6 +118,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Submit Request - Training Lab Schedule</title>
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../assets/css/sidebar.css">
+    <style>
+        /* Header Profile Link */
+        .header-profile-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .header-profile-link:hover {
+            background: #f3f4f6;
+        }
+        
+        .header-user-avatar {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #4CAF50 0%, #66bb6a 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: white;
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+        
+        .header-user-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1e3a5f;
+        }
+    </style>
 </head>
 <body>
     <div class="app-wrapper">
@@ -83,19 +169,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </a>
             </div>
             
-            <div class="sidebar-user">
-                <div class="sidebar-user-info">
-                    <div class="sidebar-user-avatar">
-                        <?php echo strtoupper(substr($_SESSION['username'], 0, 1)); ?>
-                    </div>
-                    <div class="sidebar-user-details">
-                        <div class="sidebar-user-name"><?php echo htmlspecialchars($_SESSION['username']); ?></div>
-                        <div class="sidebar-user-role">Requestor</div>
-                    </div>
-                </div>
-            </div>
-            
-            <nav class="sidebar-nav">
+            <nav class="sidebar-nav" style="padding-top: 1rem;">
                 <div class="sidebar-nav-section">
                     <div class="sidebar-nav-title">Main Menu</div>
                     <a href="dashboard.php" class="sidebar-nav-item">
@@ -126,7 +200,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <header class="top-header">
                 <div class="top-header-left">
                     <button class="menu-toggle">☰</button>
-                    <h1 class="page-title">Submit Schedule Request</h1>
+                    <a href="profile.php" class="header-profile-link">
+                        <div class="header-user-avatar">
+                            <?php echo strtoupper(substr($_SESSION['username'], 0, 1)); ?>
+                        </div>
+                        <span class="header-user-name"><?php echo htmlspecialchars($_SESSION['username']); ?></span>
+                    </a>
                 </div>
                 <div class="top-header-right">
                     <span style="color: #6b7280; font-size: 0.9rem;">
