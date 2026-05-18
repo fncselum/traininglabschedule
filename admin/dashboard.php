@@ -112,6 +112,10 @@ $total_cancellations = $conn->query("SELECT COUNT(*) as total FROM cancellation_
                             <span class="sidebar-nav-badge"><?php echo $pending_cancellations; ?></span>
                         <?php endif; ?>
                     </a>
+                    <a href="history.php" class="sidebar-nav-item">
+                        <span class="sidebar-nav-icon">📜</span>
+                        <span class="sidebar-nav-text">Transaction History</span>
+                    </a>
                     <a href="../index.php" class="sidebar-nav-item">
                         <span class="sidebar-nav-icon">📅</span>
                         <span class="sidebar-nav-text">View Calendar</span>

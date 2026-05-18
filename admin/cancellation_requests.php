@@ -595,6 +595,10 @@ if (isset($_SESSION['flash_message'])) {
                         <span class="sidebar-nav-icon">🗑️</span>
                         <span class="sidebar-nav-text">Cancellation Requests</span>
                     </a>
+                    <a href="history.php" class="sidebar-nav-item">
+                        <span class="sidebar-nav-icon">📜</span>
+                        <span class="sidebar-nav-text">Transaction History</span>
+                    </a>
                     <a href="../index.php" class="sidebar-nav-item">
                         <span class="sidebar-nav-icon">📅</span>
                         <span class="sidebar-nav-text">View Calendar</span>
