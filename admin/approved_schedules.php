@@ -328,6 +328,10 @@ $approved_schedules = $conn->query("SELECT * FROM approved_schedules ORDER BY st
                     <span class="sidebar-nav-icon">✅</span>
                     <span class="sidebar-nav-text">Manage Schedules</span>
                 </a>
+                <a href="cancellation_requests.php" class="sidebar-nav-item">
+                    <span class="sidebar-nav-icon">🗑️</span>
+                    <span class="sidebar-nav-text">Cancellation Requests</span>
+                </a>
                 <a href="../index.php" class="sidebar-nav-item">
                     <span class="sidebar-nav-icon">📅</span>
                     <span class="sidebar-nav-text">View Calendar</span>

@@ -19,6 +19,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     $conn = getDBConnection();
     
+    if (!$conn) {
+        $_SESSION['flash_message'] = 'Database connection failed. Please try again later.';
+        $_SESSION['flash_type'] = 'error';
+        header('Location: ../index.php');
+        exit();
+    }
+    
     try {
         // Verify that the schedule belongs to the current requestor
         $verify_stmt = $conn->prepare("
@@ -27,6 +34,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             LEFT JOIN schedule_requests sr ON a.request_id = sr.request_id
             WHERE a.schedule_id = ?
         ");
+        
+        if (!$verify_stmt) {
+            throw new Exception("Failed to prepare verification query: " . $conn->error);
+        }
         $verify_stmt->bind_param("i", $schedule_id);
         $verify_stmt->execute();
         $schedule = $verify_stmt->get_result()->fetch_assoc();
@@ -51,6 +62,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             SELECT cancellation_id FROM cancellation_requests 
             WHERE schedule_id = ? AND status = 'pending'
         ");
+        
+        if (!$existing_stmt) {
+            throw new Exception("Failed to prepare existing request query: " . $conn->error);
+        }
         $existing_stmt->bind_param("i", $schedule_id);
         $existing_stmt->execute();
         $existing = $existing_stmt->get_result()->fetch_assoc();
@@ -68,16 +83,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             INSERT INTO cancellation_requests (schedule_id, requestor_id, reason, status, created_at)
             VALUES (?, ?, ?, 'pending', NOW())
         ");
+        
+        if (!$insert_stmt) {
+            throw new Exception("Failed to prepare insert query: " . $conn->error);
+        }
         $insert_stmt->bind_param("iis", $schedule_id, $requestor_id, $reason);
         $insert_stmt->execute();
         $insert_stmt->close();
         
         // Notify all admins about the cancellation request
         $admin_stmt = $conn->prepare("SELECT user_id FROM users WHERE role IN ('admin', 'superadmin')");
+        
+        if (!$admin_stmt) {
+            throw new Exception("Failed to prepare admin query: " . $conn->error);
+        }
+        
         $admin_stmt->execute();
         $admins = $admin_stmt->get_result();
         
         $notif_stmt = $conn->prepare("INSERT INTO notifications (user_id, message, type) VALUES (?, ?, 'request_submitted')");
+        
+        if (!$notif_stmt) {
+            throw new Exception("Failed to prepare notification query: " . $conn->error);
+        }
         $schedule_date = date('F d, Y', strtotime($schedule['start_date']));
         $schedule_time = date('h:i A', strtotime($schedule['start_time']));
         $notif_message = "Schedule Cancellation Request - '{$schedule['title']}' scheduled for {$schedule_date} at {$schedule_time}. Request submitted by " . $_SESSION['username'] . " with reason: " . substr($reason, 0, 100) . (strlen($reason) > 100 ? '...' : '') . ". Please review this request and take appropriate administrative action.";

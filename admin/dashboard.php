@@ -11,6 +11,10 @@ $approved_schedules = $conn->query("SELECT * FROM approved_schedules ORDER BY st
 
 // Count total approved schedules
 $total_schedules = $conn->query("SELECT COUNT(*) as total FROM approved_schedules")->fetch_assoc()['total'];
+
+// Count cancellation requests
+$pending_cancellations = $conn->query("SELECT COUNT(*) as total FROM cancellation_requests WHERE status = 'pending'")->fetch_assoc()['total'];
+$total_cancellations = $conn->query("SELECT COUNT(*) as total FROM cancellation_requests")->fetch_assoc()['total'];
 ?>
 
 <!DOCTYPE html>
@@ -101,6 +105,13 @@ $total_schedules = $conn->query("SELECT COUNT(*) as total FROM approved_schedule
                         <span class="sidebar-nav-icon">✅</span>
                         <span class="sidebar-nav-text">Manage Schedules</span>
                     </a>
+                    <a href="cancellation_requests.php" class="sidebar-nav-item">
+                        <span class="sidebar-nav-icon">🗑️</span>
+                        <span class="sidebar-nav-text">Cancellation Requests</span>
+                        <?php if ($pending_cancellations > 0): ?>
+                            <span class="sidebar-nav-badge"><?php echo $pending_cancellations; ?></span>
+                        <?php endif; ?>
+                    </a>
                     <a href="../index.php" class="sidebar-nav-item">
                         <span class="sidebar-nav-icon">📅</span>
                         <span class="sidebar-nav-text">View Calendar</span>
@@ -155,6 +166,13 @@ $total_schedules = $conn->query("SELECT COUNT(*) as total FROM approved_schedule
                             <div style="background: linear-gradient(135deg, #4CAF50 0%, #66bb6a 100%); padding: 2rem; border-radius: 12px; color: white; box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);">
                                 <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 0.5rem;">Total Schedules</div>
                                 <div style="font-size: 2.5rem; font-weight: 700;"><?php echo $total_schedules; ?></div>
+                            </div>
+                            <div style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); padding: 2rem; border-radius: 12px; color: white; box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);">
+                                <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 0.5rem;">Pending Cancellations</div>
+                                <div style="font-size: 2.5rem; font-weight: 700;"><?php echo $pending_cancellations; ?></div>
+                                <div style="font-size: 0.8rem; opacity: 0.8; margin-top: 0.5rem;">
+                                    <?php echo $total_cancellations; ?> total requests
+                                </div>
                             </div>
                         </div>
                         <p style="color: #6b7280; margin: 0;">

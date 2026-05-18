@@ -781,6 +781,19 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
             transform: translateY(-1px);
         }
         
+        /* Professional Modal Button Hover Effects */
+        .request-form-modal .btn-cancel:hover {
+            background: #e5e7eb !important;
+            border-color: #d1d5db !important;
+            transform: translateY(-1px);
+        }
+        
+        .request-form-modal .btn-submit:hover {
+            background: linear-gradient(135deg, #dc2626, #b91c1c) !important;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4) !important;
+        }
+        
         .no-schedules-message {
             text-align: center;
             color: #6b7280;
@@ -1948,28 +1961,68 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
     <!-- Cancellation Request Modal (for requestors only) -->
     <?php if ($isRequestor): ?>
     <div class="schedule-details-overlay" id="cancelRequestOverlay" onclick="closeCancelRequest()"></div>
-    <div class="request-form-modal" id="cancelRequestModal">
+    <div class="request-form-modal" id="cancelRequestModal" style="max-width: 550px;">
         <span class="close-details" onclick="closeCancelRequest()">&times;</span>
-        <h3>🗑️ Request Schedule Cancellation</h3>
+        
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #fef3c7, #fbbf24); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; box-shadow: 0 8px 25px rgba(251, 191, 36, 0.3);">
+                <span style="font-size: 2.5rem;">⚠️</span>
+            </div>
+            <h3 style="color: #1e3a5f; font-size: 1.5rem; font-weight: 700; margin: 0 0 0.5rem 0;">Request Schedule Cancellation</h3>
+            <p style="color: #6b7280; font-size: 0.95rem; margin: 0; line-height: 1.5;">This action will submit a cancellation request to the administrator for review.</p>
+        </div>
+        
+        <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #e8f5e9, #c8e6c9); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <span style="font-size: 1.25rem;">📅</span>
+                </div>
+                <div>
+                    <div style="font-weight: 600; color: #1e3a5f; font-size: 0.9rem; margin-bottom: 0.25rem;">Schedule to Cancel:</div>
+                    <div style="color: #374151; font-size: 1rem; font-weight: 500;" id="cancelScheduleTitle">Loading...</div>
+                </div>
+            </div>
+            <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 0.75rem 1rem; border-radius: 6px;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="font-size: 1rem;">💡</span>
+                    <span style="color: #856404; font-size: 0.85rem; font-weight: 500;">Note: This request requires administrator approval and cannot be undone once processed.</span>
+                </div>
+            </div>
+        </div>
         
         <form id="cancelRequestForm" method="POST" action="requestor/cancel_request.php">
             <input type="hidden" name="schedule_id" id="cancelScheduleId">
             
             <div class="form-group">
-                <label>Schedule to Cancel:</label>
-                <div style="background: #f8f9fa; padding: 0.75rem; border-radius: 6px; color: #495057; font-weight: 500;">
-                    <span id="cancelScheduleTitle"></span>
+                <label for="cancelReason" style="display: flex; align-items: center; gap: 0.5rem; font-weight: 600; color: #374151; margin-bottom: 0.75rem; font-size: 0.95rem;">
+                    <span style="color: #ef4444;">📝</span>
+                    Reason for Cancellation *
+                </label>
+                <textarea 
+                    name="reason" 
+                    id="cancelReason" 
+                    required 
+                    placeholder="Please provide a detailed reason for requesting this cancellation. This information will help the administrator process your request more efficiently."
+                    style="width: 100%; padding: 0.875rem; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 0.95rem; font-family: inherit; transition: all 0.3s ease; resize: vertical; min-height: 120px; line-height: 1.5;"
+                    onfocus="this.style.borderColor='#4CAF50'; this.style.boxShadow='0 0 0 3px rgba(76, 175, 80, 0.1)'"
+                    onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none'"
+                ></textarea>
+                <div style="font-size: 0.8rem; color: #6b7280; margin-top: 0.5rem; display: flex; align-items: center; gap: 0.25rem;">
+                    <span>ℹ️</span>
+                    <span>Provide specific details to help expedite the review process</span>
                 </div>
             </div>
             
-            <div class="form-group">
-                <label for="cancel_reason">Reason for Cancellation *</label>
-                <textarea id="cancelReason" name="reason" required placeholder="Please provide a reason for cancelling this schedule..."></textarea>
-            </div>
-            
-            <div class="form-actions">
-                <button type="button" class="btn-cancel" onclick="closeCancelRequest()">Cancel</button>
-                <button type="submit" class="btn-submit" style="background: linear-gradient(135deg, #ef4444, #dc2626);">Submit Cancellation Request</button>
+            <div class="form-actions" style="display: flex; gap: 0.75rem; margin-top: 2rem;">
+                <button type="button" class="btn-cancel" onclick="closeCancelRequest()" style="flex: 1; padding: 0.875rem; background: #f3f4f6; color: #374151; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
+                    Cancel
+                </button>
+                <button type="submit" class="btn-submit" style="flex: 1; padding: 0.875rem; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; border: none; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);">
+                    <span style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                        <span>🗑️</span>
+                        <span>Submit Cancellation Request</span>
+                    </span>
+                </button>
             </div>
         </form>
     </div>
@@ -2317,12 +2370,10 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
         
         // Request cancellation function
         function requestCancellation(scheduleId, scheduleTitle) {
-            if (confirm(`Are you sure you want to request cancellation for "${scheduleTitle}"?`)) {
-                document.getElementById('cancelScheduleId').value = scheduleId;
-                document.getElementById('cancelScheduleTitle').textContent = scheduleTitle;
-                document.getElementById('cancelRequestModal').classList.add('active');
-                document.getElementById('cancelRequestOverlay').classList.add('active');
-            }
+            document.getElementById('cancelScheduleId').value = scheduleId;
+            document.getElementById('cancelScheduleTitle').textContent = scheduleTitle;
+            document.getElementById('cancelRequestModal').classList.add('active');
+            document.getElementById('cancelRequestOverlay').classList.add('active');
         }
         
         // Close cancellation request modal

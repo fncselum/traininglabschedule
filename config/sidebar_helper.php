@@ -53,6 +53,16 @@ function renderRequestorNav($activePage = 'dashboard') {
 }
 
 function renderAdminNav($activePage = 'dashboard', $pendingCount = 0) {
+    // Get cancellation requests count
+    $conn = getDBConnection();
+    $cancellation_count = 0;
+    if ($conn) {
+        $result = $conn->query("SELECT COUNT(*) as count FROM cancellation_requests WHERE status = 'pending'");
+        if ($result) {
+            $cancellation_count = $result->fetch_assoc()['count'];
+        }
+        closeDBConnection($conn);
+    }
     ?>
     <nav class="sidebar-nav">
         <div class="sidebar-nav-section">
@@ -61,16 +71,16 @@ function renderAdminNav($activePage = 'dashboard', $pendingCount = 0) {
                 <span class="sidebar-nav-icon">📊</span>
                 <span class="sidebar-nav-text">Dashboard</span>
             </a>
-            <a href="pending_requests.php" class="sidebar-nav-item <?php echo $activePage === 'pending' ? 'active' : ''; ?>">
-                <span class="sidebar-nav-icon">⏳</span>
-                <span class="sidebar-nav-text">Pending Requests</span>
-                <?php if ($pendingCount > 0): ?>
-                    <span class="sidebar-nav-badge"><?php echo $pendingCount; ?></span>
-                <?php endif; ?>
-            </a>
             <a href="approved_schedules.php" class="sidebar-nav-item <?php echo $activePage === 'schedules' ? 'active' : ''; ?>">
                 <span class="sidebar-nav-icon">✅</span>
                 <span class="sidebar-nav-text">Manage Schedules</span>
+            </a>
+            <a href="cancellation_requests.php" class="sidebar-nav-item <?php echo $activePage === 'cancellations' ? 'active' : ''; ?>">
+                <span class="sidebar-nav-icon">🗑️</span>
+                <span class="sidebar-nav-text">Cancellation Requests</span>
+                <?php if ($cancellation_count > 0): ?>
+                    <span class="sidebar-nav-badge"><?php echo $cancellation_count; ?></span>
+                <?php endif; ?>
             </a>
             <a href="../index.php" class="sidebar-nav-item <?php echo $activePage === 'public' ? 'active' : ''; ?>">
                 <span class="sidebar-nav-icon">📅</span>
