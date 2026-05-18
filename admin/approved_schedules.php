@@ -65,9 +65,18 @@ $approved_schedules = $conn->query("SELECT * FROM approved_schedules ORDER BY st
             width: 90%; max-width: 520px;
             box-shadow: 0 24px 64px rgba(0,0,0,.25);
             overflow: hidden; position: relative;
-            animation: modalIn .3s cubic-bezier(.34,1.56,.64,1);
+            animation: modalIn .3s ease-out;
         }
-        @keyframes modalIn { from { opacity:0; transform:scale(.88) translateY(20px); } to { opacity:1; transform:scale(1) translateY(0); } }
+        @keyframes modalIn { 
+            from { 
+                opacity: 0; 
+                transform: scale(0.95) translateY(-10px); 
+            } 
+            to { 
+                opacity: 1; 
+                transform: scale(1) translateY(0); 
+            } 
+        }
 
         /* ── Modal Views ── */
         .modal-view { display: none; flex-direction: column; }
@@ -222,8 +231,12 @@ $approved_schedules = $conn->query("SELECT * FROM approved_schedules ORDER BY st
         .add-modal-box {
             background: #fff; border-radius: 18px; width: 90%; max-width: 560px;
             box-shadow: 0 24px 64px rgba(0,0,0,.25); overflow: hidden;
-            animation: modalIn .3s cubic-bezier(.34,1.56,.64,1);
+            animation: modalFadeIn .25s ease-out;
             max-height: 90vh; overflow-y: auto;
+        }
+        @keyframes modalFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
         .add-modal-header {
             padding: 1.5rem 1.75rem 1rem;
@@ -672,12 +685,18 @@ $approved_schedules = $conn->query("SELECT * FROM approved_schedules ORDER BY st
         document.getElementById('addScheduleForm').reset();
     }
 
-    document.getElementById('addModalOverlay').addEventListener('click', function(e) {
-        if (e.target === this) closeAddModal();
-    });
-
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') { closeModal(); closeAddModal(); }
+    });
+    
+    // Wait for DOM to be fully loaded before adding event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+        const addModalOverlay = document.getElementById('addModalOverlay');
+        if (addModalOverlay) {
+            addModalOverlay.addEventListener('click', function(e) {
+                if (e.target === this) closeAddModal();
+            });
+        }
     });
 </script>
 
@@ -708,9 +727,9 @@ $approved_schedules = $conn->query("SELECT * FROM approved_schedules ORDER BY st
                            placeholder="e.g. Walk-in Training Session">
                 </div>
                 <div class="add-form-group">
-                    <label>📧 Requestor Email *</label>
-                    <input type="email" name="requestor_email" required
-                           placeholder="e.g. juan.delacruz@deped.gov.ph">
+                    <label>📧 Email *</label>
+                    <input type="email" name="deped_email" required
+                           placeholder="e.g. juan.delacruz@example.com">
                 </div>
                 <div class="add-time-row">
                     <div class="add-form-group">

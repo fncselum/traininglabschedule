@@ -1,6 +1,7 @@
 <?php
 require_once '../config/database.php';
 require_once '../config/session.php';
+require_once '../config/email_helper.php';
 
 requireAnyRole(['admin', 'superadmin']);
 
@@ -19,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['schedule_id'])) {
         $errors[] = 'New date cannot be in the past.';
     }
     if (!empty($new_start) && !empty($new_end) && strtotime($new_start) >= strtotime($new_end)) {
-        $errors[] = 'End time must be after start time.';
+        $errors[] = 'The end time must be later than the start time. Please adjust the schedule timing.';
     }
 
     if (!empty($errors)) {
@@ -52,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['schedule_id'])) {
     $chk->close();
 
     if ($conflict > 0) {
-        $_SESSION['flash_message'] = 'Reschedule failed: Time conflict with an existing approved schedule.';
+        $_SESSION['flash_message'] = 'Reschedule operation cancelled: The selected time slot conflicts with an existing approved schedule. Please choose a different time.';
         $_SESSION['flash_type'] = 'error';
         closeDBConnection($conn);
         header('Location: approved_schedules.php');
@@ -84,13 +85,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['schedule_id'])) {
         $upd->execute();
         $upd->close();
 
+        // Send email notification if deped_email exists
+        if (!empty($schedule['deped_email'])) {
+            $oldScheduleData = [
+                'start_date' => $schedule['start_date'],
+                'start_time' => $schedule['start_time'],
+                'end_time' => $schedule['end_time']
+            ];
+            $newScheduleData = [
+                'title' => $schedule['title'],
+                'start_date' => $new_date,
+                'start_time' => $new_start,
+                'end_time' => $new_end,
+                'participants' => $schedule['participants'],
+                'program_owner' => $schedule['program_owner'],
+                'office' => $schedule['office']
+            ];
+            sendScheduleRescheduleEmail($schedule['deped_email'], $oldScheduleData, $newScheduleData, $reason);
+        }
+
         // Notify requestor
         if ($schedule['requestor_id']) {
             $fmt_date  = date('F d, Y', strtotime($new_date));
             $fmt_start = date('h:i A',  strtotime($new_start));
             $fmt_end   = date('h:i A',  strtotime($new_end));
-            $notif_msg = "Your schedule '{$schedule['title']}' has been rescheduled to $fmt_date from $fmt_start to $fmt_end.";
-            if (!empty($reason)) $notif_msg .= " Reason: $reason";
+            $notif_msg = "Your training laboratory schedule '{$schedule['title']}' has been rescheduled by the administrator to $fmt_date from $fmt_start to $fmt_end. Please adjust your preparations accordingly.";
+            if (!empty($reason)) $notif_msg .= " Reason for rescheduling: $reason";
 
             $notif = $conn->prepare("INSERT INTO notifications (user_id, message, type) VALUES (?, ?, 'schedule_modified')");
             $notif->bind_param("is", $schedule['requestor_id'], $notif_msg);
@@ -99,12 +119,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['schedule_id'])) {
         }
 
         $conn->commit();
-        $_SESSION['flash_message'] = "Schedule '{$schedule['title']}' has been rescheduled successfully.";
+        $_SESSION['flash_message'] = "Training laboratory schedule '{$schedule['title']}' has been successfully rescheduled and updated in the calendar.";
         $_SESSION['flash_type'] = 'success';
 
     } catch (Exception $e) {
         $conn->rollback();
-        $_SESSION['flash_message'] = 'Failed to reschedule. Please try again.';
+        $_SESSION['flash_message'] = 'Unable to reschedule the training laboratory session. Please verify the details and try again.';
         $_SESSION['flash_type'] = 'error';
     }
 

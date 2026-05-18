@@ -1,6 +1,7 @@
 <?php
 require_once '../config/database.php';
 require_once '../config/session.php';
+require_once '../config/email_helper.php';
 
 requireAnyRole(['admin', 'superadmin']);
 
@@ -19,22 +20,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $participants     = trim($_POST['participants']     ?? '');
     $program_owner    = trim($_POST['program_owner']    ?? '');
     $office           = trim($_POST['office']           ?? '');
-    $requestor_email  = trim($_POST['requestor_email']  ?? '');
+    $deped_email      = trim($_POST['deped_email']      ?? '');
     $remarks          = trim($_POST['remarks']          ?? '');
 
     // Validate
     $errors = [];
     if (empty($start_date))       $errors[] = 'Date is required.';
     if (empty($title))             $errors[] = 'Title is required.';
-    if (empty($requestor_email))   $errors[] = 'Requestor email is required.';
-    elseif (!filter_var($requestor_email, FILTER_VALIDATE_EMAIL)) $errors[] = 'Please enter a valid email address.';
+    if (empty($deped_email))       $errors[] = 'Email is required.';
+    elseif (!filter_var($deped_email, FILTER_VALIDATE_EMAIL)) $errors[] = 'Please provide a valid email address for notifications.';
     if (empty($start_time))        $errors[] = 'Start time is required.';
     if (empty($end_time))          $errors[] = 'End time is required.';
     if (empty($participants))      $errors[] = 'Number of participants is required.';
     if (empty($program_owner))     $errors[] = 'Program owner is required.';
     if (empty($office))            $errors[] = 'Office is required.';
     if (!empty($start_time) && !empty($end_time) && strtotime($start_time) >= strtotime($end_time)) {
-        $errors[] = 'End time must be after start time.';
+        $errors[] = 'The end time must be later than the start time. Please adjust the schedule timing.';
     }
 
     if (!empty($errors)) {
@@ -54,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $chk->close();
 
         if ($conflict > 0) {
-            $_SESSION['flash_message'] = 'Cannot add schedule: Time conflict with an existing approved schedule on that date.';
+            $_SESSION['flash_message'] = 'Schedule creation cancelled: The selected time slot conflicts with an existing approved schedule. Please choose a different time.';
             $_SESSION['flash_type']    = 'error';
         } else {
             $admin_id  = $_SESSION['user_id'] ?? null;
@@ -63,19 +64,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $conn->prepare("
                 INSERT INTO approved_schedules
                     (request_id, start_date, title, start_time, end_time,
-                     participants, program_owner, office, requestor_email, approved_by, approved_at)
+                     participants, program_owner, office, deped_email, approved_by, approved_at)
                 VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
             ");
             $stmt->bind_param("ssssssssi",
                 $start_date, $title, $start_time, $end_time,
-                $participants, $program_owner, $office, $requestor_email, $admin_id
+                $participants, $program_owner, $office, $deped_email, $admin_id
             );
 
             if ($stmt->execute()) {
-                $_SESSION['flash_message'] = "Walk-in schedule \"$title\" added successfully.";
+                $_SESSION['flash_message'] = "Walk-in training laboratory schedule \"$title\" has been successfully added to the calendar.";
                 $_SESSION['flash_type']    = 'success';
+                
+                // Send email notification
+                $emailData = [
+                    'title' => $title,
+                    'start_date' => $start_date,
+                    'start_time' => $start_time,
+                    'end_time' => $end_time,
+                    'participants' => $participants,
+                    'program_owner' => $program_owner,
+                    'office' => $office
+                ];
+                sendScheduleAddedEmail($deped_email, $emailData);
             } else {
-                $_SESSION['flash_message'] = 'Failed to add schedule. Please try again.';
+                $_SESSION['flash_message'] = 'Unable to add the training laboratory schedule. Please verify the details and try again.';
                 $_SESSION['flash_type']    = 'error';
             }
             $stmt->close();

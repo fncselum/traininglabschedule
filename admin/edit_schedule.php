@@ -23,11 +23,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validation
     if (empty($start_date) || empty($title) || empty($start_time) || empty($end_time) || 
         empty($participants) || empty($program_owner) || empty($office)) {
-        $error = 'All fields are required.';
+        $error = 'Please complete all required fields to update the training laboratory schedule.';
     } elseif (strtotime($start_date) < strtotime(date('Y-m-d'))) {
-        $error = 'Start date cannot be in the past.';
+        $error = 'The selected start date cannot be in the past. Please choose a future date for the training session.';
     } elseif (strtotime($start_time) >= strtotime($end_time)) {
-        $error = 'End time must be after start time.';
+        $error = 'The end time must be later than the start time. Please adjust the schedule timing.';
     } else {
         $stmt = $conn->prepare("UPDATE approved_schedules SET start_date = ?, title = ?, start_time = ?, end_time = ?, participants = ?, program_owner = ?, office = ? WHERE schedule_id = ?");
         $stmt->bind_param("sssssssi", $start_date, $title, $start_time, $end_time, $participants, $program_owner, $office, $schedule_id);

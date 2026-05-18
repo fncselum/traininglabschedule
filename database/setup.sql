@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS schedule_requests (
     request_id INT AUTO_INCREMENT PRIMARY KEY,
     requestor_id INT NOT NULL,
-    deped_email VARCHAR(100) NOT NULL,
+    deped_email VARCHAR(100) NOT NULL COMMENT 'Requestor email address',
     start_date DATE NOT NULL,
     title VARCHAR(255) NOT NULL,
     start_time TIME NOT NULL,
@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS approved_schedules (
     participants TEXT NOT NULL,
     program_owner VARCHAR(100) NOT NULL,
     office VARCHAR(100) NOT NULL,
-    requestor_email VARCHAR(100) DEFAULT NULL,
+    deped_email VARCHAR(100) DEFAULT NULL COMMENT 'Requestor email address for notifications',
     approved_by INT NOT NULL,
     approved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -64,6 +64,21 @@ CREATE TABLE IF NOT EXISTS notifications (
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+-- Cancellation requests table
+CREATE TABLE IF NOT EXISTS cancellation_requests (
+    cancellation_id INT AUTO_INCREMENT PRIMARY KEY,
+    schedule_id INT NOT NULL,
+    requestor_id INT NOT NULL,
+    reason TEXT,
+    status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    processed_at TIMESTAMP NULL,
+    processed_by INT NULL,
+    FOREIGN KEY (schedule_id) REFERENCES approved_schedules(schedule_id) ON DELETE CASCADE,
+    FOREIGN KEY (requestor_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (processed_by) REFERENCES users(user_id) ON DELETE SET NULL
 );
 
 -- Insert default superadmin account (password: deped1234)
@@ -97,3 +112,6 @@ UPDATE users SET email = CONCAT(username, '@traininglab.edu') WHERE email IS NUL
 
 -- Add requestor_email column to approved_schedules (for walk-in schedules)
 ALTER TABLE approved_schedules ADD COLUMN IF NOT EXISTS requestor_email VARCHAR(100) DEFAULT NULL AFTER office;
+
+-- Rename requestor_email to deped_email in approved_schedules for consistency
+ALTER TABLE approved_schedules CHANGE COLUMN requestor_email deped_email VARCHAR(100) DEFAULT NULL;

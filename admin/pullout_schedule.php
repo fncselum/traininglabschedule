@@ -1,6 +1,7 @@
 <?php
 require_once '../config/database.php';
 require_once '../config/session.php';
+require_once '../config/email_helper.php';
 
 requireAnyRole(['admin', 'superadmin']);
 
@@ -44,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['schedule_id'])) {
 
         // Notify requestor
         if ($schedule['requestor_id']) {
-            $notif_msg = "Your schedule '{$schedule['title']}' has been pulled out from the calendar. Reason: $reason. You may submit a new schedule request.";
+            $notif_msg = "Your training laboratory schedule '{$schedule['title']}' has been cancelled by the administrator. Reason: $reason. You may submit a new schedule request if needed.";
             $notif = $conn->prepare("INSERT INTO notifications (user_id, message, type) VALUES (?, ?, 'request_rejected')");
             $notif->bind_param("is", $schedule['requestor_id'], $notif_msg);
             $notif->execute();
@@ -52,12 +53,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['schedule_id'])) {
         }
 
         $conn->commit();
-        $_SESSION['flash_message'] = "Schedule '{$schedule['title']}' has been pulled out successfully.";
+        
+        // Send email notification if deped_email exists
+        if (!empty($schedule['deped_email'])) {
+            $emailData = [
+                'title' => $schedule['title'],
+                'start_date' => $schedule['start_date'],
+                'start_time' => $schedule['start_time'],
+                'end_time' => $schedule['end_time']
+            ];
+            sendSchedulePulloutEmail($schedule['deped_email'], $emailData, $reason);
+        }
+        
+        $_SESSION['flash_message'] = "Training laboratory schedule '{$schedule['title']}' has been successfully cancelled and removed from the calendar.";
         $_SESSION['flash_type'] = 'success';
 
     } catch (Exception $e) {
         $conn->rollback();
-        $_SESSION['flash_message'] = 'Failed to pull out schedule. Please try again.';
+        $_SESSION['flash_message'] = 'Unable to cancel the schedule. Please try again or contact system support.';
         $_SESSION['flash_type'] = 'error';
     }
 

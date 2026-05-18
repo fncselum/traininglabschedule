@@ -1,6 +1,7 @@
 <?php
 require_once 'config/database.php';
 require_once 'config/session.php';
+require_once 'config/email_helper.php';
 
 // Check if user is logged in and get their role
 $isLoggedIn = isset($_SESSION['user_id']);
@@ -25,14 +26,14 @@ if ($isRequestor && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['start
     
     // Validation
     if (empty($deped_email) || empty($start_date) || empty($title) || empty($start_time) || empty($end_time) || 
-        empty($participants) || empty($program_owner) || empty($office) || empty($remarks)) {
-        $error = 'All fields are required.';
-    } elseif (!preg_match('/@deped\.gov\.ph$/', $deped_email)) {
-        $error = 'Please enter a valid DepEd email address (@deped.gov.ph).';
+        empty($participants) || empty($program_owner) || empty($office)) {
+        $error = 'Please complete all required fields to submit your training laboratory schedule request.';
+    } elseif (!filter_var($deped_email, FILTER_VALIDATE_EMAIL)) {
+        $error = 'Please provide a valid email address for schedule notifications.';
     } elseif (strtotime($start_date) < strtotime(date('Y-m-d'))) {
-        $error = 'Start date cannot be in the past.';
+        $error = 'The selected start date cannot be in the past. Please choose a future date for your training session.';
     } elseif (strtotime($start_time) >= strtotime($end_time)) {
-        $error = 'End time must be after start time.';
+        $error = 'The end time must be later than the start time. Please adjust your schedule timing.';
     } else {
         // Check for time conflicts with existing approved schedules on the same date
         $conflict_check = $conn->prepare("
@@ -67,24 +68,31 @@ if ($isRequestor && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['start
             
             if ($status === 'approved') {
                 // Auto-approve: Insert directly into approved_schedules
-                $approve_stmt = $conn->prepare("INSERT INTO approved_schedules (request_id, start_date, title, start_time, end_time, participants, program_owner, office, approved_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                $approve_stmt->bind_param("isssssssi", $request_id, $start_date, $title, $start_time, $end_time, $participants, $program_owner, $office, $user_id);
+                $approve_stmt = $conn->prepare("INSERT INTO approved_schedules (request_id, start_date, title, start_time, end_time, participants, program_owner, office, deped_email, approved_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                $approve_stmt->bind_param("issssssssi", $request_id, $start_date, $title, $start_time, $end_time, $participants, $program_owner, $office, $deped_email, $user_id);
                 $approve_stmt->execute();
                 $approve_stmt->close();
                 
-                // Notify requestor of auto-approval via email
-                $subject = "Schedule Request Approved - Training Laboratory";
-                $message = "Your schedule request for '$title' has been automatically approved!\n\n";
-                $message .= "Date: " . date('F d, Y', strtotime($start_date)) . "\n";
-                $message .= "Time: " . date('h:i A', strtotime($start_time)) . " - " . date('h:i A', strtotime($end_time)) . "\n";
-                $message .= "No time conflicts detected.\n\n";
-                $message .= "Thank you for using the Training Laboratory Schedule System.";
+                // Send email notification using PHPMailer
+                $emailData = [
+                    'title' => $title,
+                    'start_date' => $start_date,
+                    'start_time' => $start_time,
+                    'end_time' => $end_time,
+                    'participants' => $participants,
+                    'program_owner' => $program_owner,
+                    'office' => $office
+                ];
+                $emailSent = sendScheduleAddedEmail($deped_email, $emailData);
                 
-                mail($deped_email, $subject, $message, "From: noreply@traininglabschedule.local");
+                // Log email result for debugging
+                if (!$emailSent) {
+                    error_log("Failed to send email to: $deped_email");
+                }
                 
                 // Notify requestor in-app
                 $notif_stmt = $conn->prepare("INSERT INTO notifications (user_id, message, type) VALUES (?, ?, 'request_approved')");
-                $notif_message = "Your schedule request for '$title' has been automatically approved! No time conflicts detected.";
+                $notif_message = "Your training laboratory schedule request for '$title' has been automatically approved and confirmed. No scheduling conflicts were detected, and your session is now reserved.";
                 $notif_stmt->bind_param("is", $user_id, $notif_message);
                 $notif_stmt->execute();
                 $notif_stmt->close();
@@ -95,7 +103,7 @@ if ($isRequestor && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['start
                 $admins = $admin_stmt->get_result();
                 
                 $notif_stmt = $conn->prepare("INSERT INTO notifications (user_id, message, type) VALUES (?, ?, 'request_submitted')");
-                $notif_message = "New schedule request submitted by " . $_SESSION['username'] . " for $title (Time conflict detected - requires review)";
+                $notif_message = "New training laboratory schedule request submitted by " . $_SESSION['username'] . " for '$title'. Time conflict detected - administrative review required for approval.";
                 
                 while ($admin = $admins->fetch_assoc()) {
                     $notif_stmt->bind_param("is", $admin['user_id'], $notif_message);
@@ -111,8 +119,8 @@ if ($isRequestor && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['start
             
             // Show success notification and redirect
             $successMessage = $status === 'approved' 
-                ? 'Schedule Booked Successfully! ✓' 
-                : 'Schedule Submitted for Review';
+                ? 'Training Laboratory Schedule Confirmed Successfully! ✓' 
+                : 'Schedule Request Submitted for Administrative Review';
             
             // Store in session for display
             $_SESSION['booking_success'] = $successMessage;
@@ -125,7 +133,7 @@ if ($isRequestor && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['start
             exit();
         } catch (Exception $e) {
             $conn->rollback();
-            $error = 'Failed to submit request. Please try again.';
+            $error = 'Unable to submit your schedule request. Please try again or contact system support.';
         }
     }
     
@@ -204,9 +212,11 @@ $conn = getDBConnection();
 $startDate = "$currentYear-$currentMonth-01";
 $endDate = date('Y-m-t', strtotime($startDate));
 
-$sql = "SELECT * FROM approved_schedules 
-        WHERE DATE(start_date) BETWEEN '$startDate' AND '$endDate'
-        ORDER BY start_date ASC, start_time ASC";
+$sql = "SELECT a.*, sr.requestor_id 
+        FROM approved_schedules a
+        LEFT JOIN schedule_requests sr ON a.request_id = sr.request_id
+        WHERE DATE(a.start_date) BETWEEN '$startDate' AND '$endDate'
+        ORDER BY a.start_date ASC, a.start_time ASC";
 $result = $conn->query($sql);
 
 // Group schedules by day
@@ -591,10 +601,13 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
             background: rgba(0, 0, 0, 0.5);
             z-index: 999;
             backdrop-filter: blur(4px);
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
         
         .schedule-details-overlay.active {
             display: block;
+            opacity: 1;
         }
         
         .schedule-details {
@@ -631,16 +644,30 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
         }
         
         .close-details {
-            float: right;
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
             font-size: 1.5rem;
             font-weight: bold;
             cursor: pointer;
             color: #6b7280;
             line-height: 1;
+            z-index: 10;
+            background: none;
+            border: none;
+            padding: 0.5rem;
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s ease;
         }
         
         .close-details:hover {
             color: #1e3a5f;
+            background: #f3f4f6;
         }
         
         .details-content h3 {
@@ -726,6 +753,32 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
             display: flex;
             align-items: center;
             gap: 0.25rem;
+        }
+        
+        .schedule-actions {
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid rgba(255,255,255,0.3);
+        }
+        
+        .btn-cancel-request {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-cancel-request:hover {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            transform: translateY(-1px);
         }
         
         .no-schedules-message {
@@ -1154,7 +1207,7 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
         .cal-add-box {
             background: #fff; border-radius: 18px; width: 90%; max-width: 540px;
             box-shadow: 0 24px 64px rgba(0,0,0,.3);
-            animation: slideUp .35s cubic-bezier(.34,1.56,.64,1);
+            animation: fadeIn .25s ease-out;
             max-height: 90vh; overflow-y: auto;
         }
         .cal-add-header {
@@ -1655,7 +1708,7 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
                     <?php if ($isRequestor && !$holidayName): ?>
                         <button class="add-schedule-btn" onclick="event.stopPropagation(); openRequestForm('<?php echo $fullDate; ?>', '<?php echo $dateStr; ?>')" title="Add Schedule Request">+</button>
                     <?php endif; ?>
-                    <?php if (($userRole === 'admin' || $userRole === 'superadmin') && !$holidayName): ?>
+                    <?php if ($userRole === 'admin'): ?>
                         <button class="add-schedule-btn admin-add-btn" onclick="event.stopPropagation(); openAdminAddForm('<?php echo $fullDate; ?>', '<?php echo $dateStr; ?>')" title="Add Walk-in Schedule">+</button>
                     <?php endif; ?>
                 </div>
@@ -1682,7 +1735,7 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
     </div>
     
     <!-- Modal for Schedule Details (Admin) - 3 views -->
-    <?php if ($userRole === 'admin' || $userRole === 'superadmin'): ?>
+    <?php if ($userRole === 'admin'): ?>
     <div class="schedule-details-overlay" id="detailsOverlay" onclick="closeDetails()"></div>
     <div class="schedule-details" id="scheduleDetails" style="max-width:520px;">
         <span class="close-details" onclick="closeDetails()">&times;</span>
@@ -1768,14 +1821,21 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
     <div class="request-form-modal" id="requestFormModal">
         <span class="close-details" onclick="closeRequestForm()">&times;</span>
         <h3>📝 Submit Schedule Request</h3>
+        
+        <?php if (!empty($error)): ?>
+        <div class="error-message" style="background:#f8d7da;color:#721c24;padding:12px;border-radius:8px;margin-bottom:15px;border-left:4px solid #dc3545;">
+            ⚠️ <?php echo htmlspecialchars($error); ?>
+        </div>
+        <?php endif; ?>
+        
         <form id="quickRequestForm" method="POST" action="index.php">
             <div class="form-group">
                 <label for="request_date">📅 Date *</label>
                 <input type="date" id="request_date" name="start_date" required readonly>
             </div>
             <div class="form-group">
-                <label for="request_deped_email">📧 DepEd Email *</label>
-                <input type="email" id="request_deped_email" name="deped_email" required placeholder="yourname@deped.gov.ph" pattern=".*@deped\.gov\.ph$" title="Please enter a valid DepEd email address (@deped.gov.ph)">
+                <label for="request_deped_email">📧 Email *</label>
+                <input type="email" id="request_deped_email" name="deped_email" required placeholder="yourname@example.com">
             </div>
             <div class="form-group">
                 <label for="request_title">📌 Title *</label>
@@ -1814,7 +1874,7 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
     <?php endif; ?>
 
     <!-- Admin Walk-in Schedule Modal (on calendar) -->
-    <?php if ($userRole === 'admin' || $userRole === 'superadmin'): ?>
+    <?php if ($userRole === 'admin'): ?>
     <div class="cal-add-overlay" id="calAddOverlay" onclick="handleCalAddOverlay(event)">
         <div class="cal-add-box">
             <div class="cal-add-header">
@@ -1840,9 +1900,9 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
                                placeholder="e.g. Walk-in Training Session">
                     </div>
                     <div class="cal-form-group">
-                        <label>📧 Requestor Email *</label>
-                        <input type="email" name="requestor_email" required
-                               placeholder="e.g. juan.delacruz@deped.gov.ph">
+                        <label>📧 Email *</label>
+                        <input type="email" name="deped_email" required
+                               placeholder="e.g. juan.delacruz@example.com">
                     </div>
                     <div class="cal-time-row">
                         <div class="cal-form-group">
@@ -1884,6 +1944,37 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
         </div>
     </div>
     <?php endif; ?>
+    
+    <!-- Cancellation Request Modal (for requestors only) -->
+    <?php if ($isRequestor): ?>
+    <div class="schedule-details-overlay" id="cancelRequestOverlay" onclick="closeCancelRequest()"></div>
+    <div class="request-form-modal" id="cancelRequestModal">
+        <span class="close-details" onclick="closeCancelRequest()">&times;</span>
+        <h3>🗑️ Request Schedule Cancellation</h3>
+        
+        <form id="cancelRequestForm" method="POST" action="requestor/cancel_request.php">
+            <input type="hidden" name="schedule_id" id="cancelScheduleId">
+            
+            <div class="form-group">
+                <label>Schedule to Cancel:</label>
+                <div style="background: #f8f9fa; padding: 0.75rem; border-radius: 6px; color: #495057; font-weight: 500;">
+                    <span id="cancelScheduleTitle"></span>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="cancel_reason">Reason for Cancellation *</label>
+                <textarea id="cancelReason" name="reason" required placeholder="Please provide a reason for cancelling this schedule..."></textarea>
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" class="btn-cancel" onclick="closeCancelRequest()">Cancel</button>
+                <button type="submit" class="btn-submit" style="background: linear-gradient(135deg, #ef4444, #dc2626);">Submit Cancellation Request</button>
+            </div>
+        </form>
+    </div>
+    <?php endif; ?>
+
     <div class="conflict-notification-overlay" id="conflictOverlay"></div>
     <div class="conflict-notification-modal" id="conflictModal">
         <div class="conflict-notification-header">
@@ -1912,8 +2003,8 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
     </footer>
     
     <script>
-        // Check if user is admin or superadmin
-        const isAdmin = <?php echo ($userRole === 'admin' || $userRole === 'superadmin') ? 'true' : 'false'; ?>;
+        // Check if user is admin
+        const isAdmin = <?php echo ($userRole === 'admin') ? 'true' : 'false'; ?>;
         
         // Show all schedules for a specific day — clicking ANYWHERE in the cell works
         function showDaySchedules(schedules, dateStr, event) {
@@ -1932,6 +2023,16 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
                     const clickHandler = isAdmin ? `onclick="showScheduleDetails(${schedule.schedule_id})"` : '';
                     const cursorStyle = isAdmin ? 'cursor: pointer;' : '';
                     
+                    // Check if current user is the requestor of this schedule
+                    const isOwner = <?php echo $isRequestor ? 'true' : 'false'; ?> && schedule.requestor_id == <?php echo $_SESSION['user_id'] ?? 'null'; ?>;
+                    const cancelButton = isOwner ? `
+                        <div class="schedule-actions">
+                            <button class="btn-cancel-request" onclick="event.stopPropagation(); requestCancellation(${schedule.schedule_id}, '${schedule.title}')">
+                                🗑️ Request Cancellation
+                            </button>
+                        </div>
+                    ` : '';
+                    
                     content += `
                         <div class="schedule-list-item" ${clickHandler} style="${cursorStyle}">
                             <div class="schedule-list-title">${schedule.title}</div>
@@ -1942,6 +2043,7 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
                                 <span>👥 ${schedule.participants} participants</span>
                                 <span>👤 ${schedule.program_owner}</span>
                             </div>
+                            ${cancelButton}
                         </div>
                     `;
                 });
@@ -2026,9 +2128,28 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
         }
         
         function closeDetails() {
-            document.getElementById('scheduleDetails').classList.remove('active');
-            document.getElementById('detailsOverlay').classList.remove('active');
+            const scheduleDetails = document.getElementById('scheduleDetails');
+            const detailsOverlay = document.getElementById('detailsOverlay');
+            
+            if (scheduleDetails) {
+                scheduleDetails.classList.remove('active');
+            }
+            if (detailsOverlay) {
+                detailsOverlay.classList.remove('active');
+            }
+            
+            // Show the day schedules list again
+            const daySchedulesList = document.getElementById('daySchedulesList');
+            const dayListOverlay = document.getElementById('dayListOverlay');
+            
+            if (daySchedulesList && dayListOverlay) {
+                daySchedulesList.classList.add('active');
+                dayListOverlay.classList.add('active');
+            }
         }
+        
+        // Make closeDetails available globally
+        window.closeDetails = closeDetails;
         
         // Check for time conflicts with existing schedules
         function checkTimeConflict() {
@@ -2186,7 +2307,30 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
                     closeSuccessMessage();
                 }, 5000);
             }
+            
+            // Reopen form if there's an error
+            <?php if (!empty($error) && $isRequestor): ?>
+            document.getElementById('requestFormModal').classList.add('active');
+            document.getElementById('requestFormOverlay').classList.add('active');
+            <?php endif; ?>
         });
+        
+        // Request cancellation function
+        function requestCancellation(scheduleId, scheduleTitle) {
+            if (confirm(`Are you sure you want to request cancellation for "${scheduleTitle}"?`)) {
+                document.getElementById('cancelScheduleId').value = scheduleId;
+                document.getElementById('cancelScheduleTitle').textContent = scheduleTitle;
+                document.getElementById('cancelRequestModal').classList.add('active');
+                document.getElementById('cancelRequestOverlay').classList.add('active');
+            }
+        }
+        
+        // Close cancellation request modal
+        function closeCancelRequest() {
+            document.getElementById('cancelRequestModal').classList.remove('active');
+            document.getElementById('cancelRequestOverlay').classList.remove('active');
+            document.getElementById('cancelReason').value = '';
+        }
     </script>
 </body>
 </html>

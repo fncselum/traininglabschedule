@@ -8,15 +8,11 @@ $conn = getDBConnection();
 
 // Fetch statistics
 $total_users = $conn->query("SELECT COUNT(*) as count FROM users")->fetch_assoc()['count'];
-$total_pending = $conn->query("SELECT COUNT(*) as count FROM schedule_requests WHERE status = 'pending'")->fetch_assoc()['count'];
 $total_approved = $conn->query("SELECT COUNT(*) as count FROM approved_schedules")->fetch_assoc()['count'];
 $active_users = $conn->query("SELECT COUNT(*) as count FROM users WHERE status = 'active'")->fetch_assoc()['count'];
 
 // Fetch recent users
 $recent_users = $conn->query("SELECT * FROM users ORDER BY created_at DESC LIMIT 5");
-
-// Fetch pending schedule requests
-$pending_requests = $conn->query("SELECT sr.*, u.username FROM schedule_requests sr JOIN users u ON sr.requestor_id = u.user_id WHERE sr.status = 'pending' ORDER BY sr.created_at DESC LIMIT 5");
 ?>
 
 <!DOCTYPE html>
@@ -62,20 +58,9 @@ $pending_requests = $conn->query("SELECT sr.*, u.username FROM schedule_requests
                         <span class="sidebar-nav-icon">📊</span>
                         <span class="sidebar-nav-text">Dashboard</span>
                     </a>
-                    <a href="../admin/pending_requests.php" class="sidebar-nav-item">
-                        <span class="sidebar-nav-icon">⏳</span>
-                        <span class="sidebar-nav-text">Pending Requests</span>
-                        <?php if ($total_pending > 0): ?>
-                            <span class="sidebar-nav-badge"><?php echo $total_pending; ?></span>
-                        <?php endif; ?>
-                    </a>
-                    <a href="../admin/approved_schedules.php" class="sidebar-nav-item">
-                        <span class="sidebar-nav-icon">✅</span>
-                        <span class="sidebar-nav-text">Manage Schedules</span>
-                    </a>
                     <a href="../index.php" class="sidebar-nav-item">
                         <span class="sidebar-nav-icon">📅</span>
-                        <span class="sidebar-nav-text">Public Schedule</span>
+                        <span class="sidebar-nav-text">View Calendar</span>
                     </a>
                 </div>
                 
@@ -137,20 +122,11 @@ $pending_requests = $conn->query("SELECT sr.*, u.username FROM schedule_requests
                     
                     <div class="stat-card">
                         <div class="stat-card-header">
-                            <span class="stat-card-title">Pending Requests</span>
-                            <div class="stat-card-icon">⏳</div>
-                        </div>
-                        <div class="stat-card-value"><?php echo $total_pending; ?></div>
-                        <div class="stat-card-label">Awaiting review</div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-card-header">
-                            <span class="stat-card-title">Approved Schedules</span>
+                            <span class="stat-card-title">Total Schedules</span>
                             <div class="stat-card-icon">📅</div>
                         </div>
                         <div class="stat-card-value"><?php echo $total_approved; ?></div>
-                        <div class="stat-card-label">Total schedules</div>
+                        <div class="stat-card-label">Approved schedules</div>
                     </div>
                 </div>
 
@@ -197,53 +173,6 @@ $pending_requests = $conn->query("SELECT sr.*, u.username FROM schedule_requests
                             </div>
                         <?php else: ?>
                             <p class="no-data">No users found.</p>
-                        <?php endif; ?>
-                    </div>
-                </div>
-
-                <!-- Pending Requests -->
-                <div class="content-card">
-                    <div class="content-card-header">
-                        <h3 class="content-card-title">Pending Schedule Requests</h3>
-                        <div class="content-card-actions">
-                            <a href="../admin/pending_requests.php" class="btn btn-primary btn-sm">View All</a>
-                        </div>
-                    </div>
-                    <div class="content-card-body">
-                        <?php if ($pending_requests->num_rows > 0): ?>
-                            <div class="table-responsive">
-                                <table class="schedule-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Submitted By</th>
-                                            <th>Title</th>
-                                            <th>Start Date</th>
-                                            <th>Time</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php while ($request = $pending_requests->fetch_assoc()): ?>
-                                            <tr>
-                                                <td><?php echo htmlspecialchars($request['username']); ?></td>
-                                                <td><?php echo htmlspecialchars($request['title']); ?></td>
-                                                <td><?php echo date('M d, Y', strtotime($request['start_date'])); ?></td>
-                                                <td>
-                                                    <?php echo date('h:i A', strtotime($request['start_time'])); ?> - 
-                                                    <?php echo date('h:i A', strtotime($request['end_time'])); ?>
-                                                </td>
-                                                <td>
-                                                    <div class="action-buttons">
-                                                        <a href="../admin/review_request.php?id=<?php echo $request['request_id']; ?>" class="btn btn-primary btn-sm">Review</a>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        <?php endwhile; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        <?php else: ?>
-                            <p class="no-data">No pending requests at this time.</p>
                         <?php endif; ?>
                     </div>
                 </div>
