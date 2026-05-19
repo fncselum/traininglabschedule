@@ -36,17 +36,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $conn->begin_transaction();
                 
                 if ($action === 'approve') {
-                    // Update cancellation request status
-                    $update_stmt = $conn->prepare("
-                        UPDATE cancellation_requests 
-                        SET status = 'approved', processed_at = NOW(), processed_by = ?
-                        WHERE cancellation_id = ?
+                    // STEP 1: Store schedule details in cancellation_requests for history preservation
+                    $preserve_stmt = $conn->prepare("
+                        UPDATE cancellation_requests cr
+                        JOIN approved_schedules a ON cr.schedule_id = a.schedule_id
+                        SET 
+                            cr.status = 'approved',
+                            cr.processed_at = NOW(),
+                            cr.processed_by = ?,
+                            cr.title = a.title,
+                            cr.start_date = a.start_date,
+                            cr.start_time = a.start_time,
+                            cr.end_time = a.end_time,
+                            cr.participants = a.participants,
+                            cr.program_owner = a.program_owner,
+                            cr.office = a.office,
+                            cr.deped_email = a.deped_email
+                        WHERE cr.cancellation_id = ?
                     ");
-                    $update_stmt->bind_param("ii", $_SESSION['user_id'], $cancellation_id);
-                    $update_stmt->execute();
-                    $update_stmt->close();
+                    $preserve_stmt->bind_param("ii", $_SESSION['user_id'], $cancellation_id);
+                    $preserve_stmt->execute();
+                    $preserve_stmt->close();
                     
-                    // Delete the approved schedule
+                    // STEP 2: Now safe to delete the schedule (data is preserved in cancellation_requests)
                     $delete_stmt = $conn->prepare("DELETE FROM approved_schedules WHERE schedule_id = ?");
                     $delete_stmt->bind_param("i", $request['schedule_id']);
                     $delete_stmt->execute();

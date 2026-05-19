@@ -11,7 +11,7 @@ define('SMTP_USERNAME', 'elumfrancesclear@gmail.com'); // Your email address
 define('SMTP_PASSWORD', 'salm djjk cuwd jgbx');    // Your email password or app-specific password
 define('SMTP_ENCRYPTION', 'tls');                // Encryption type: 'tls' or 'ssl'
 
-// Sender Information
+// Sender Information Q
 define('MAIL_FROM_EMAIL', 'elumfrancesclear@gmail.com');
 define('MAIL_FROM_NAME', 'Training Lab Schedule System');
 

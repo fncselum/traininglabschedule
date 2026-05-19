@@ -6,11 +6,6 @@ requireAnyRole(['admin', 'superadmin']);
 
 $conn = getDBConnection();
 
-// Pagination
-$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
-$per_page = 20;
-$offset = ($page - 1) * $per_page;
-
 // Filter parameters
 $filter_type = isset($_GET['type']) ? $_GET['type'] : 'all';
 $filter_date_from = isset($_GET['date_from']) ? $_GET['date_from'] : '';
@@ -23,9 +18,14 @@ $params = [];
 $types = '';
 
 if ($filter_type !== 'all') {
-    $where_conditions[] = "action_type = ?";
-    $params[] = $filter_type;
-    $types .= 's';
+    if ($filter_type === 'cancelled') {
+        // Include all cancellation-related types
+        $where_conditions[] = "(action_type = 'cancelled' OR action_type = 'cancel_requested' OR action_type = 'cancel_rejected')";
+    } else {
+        $where_conditions[] = "action_type = ?";
+        $params[] = $filter_type;
+        $types .= 's';
+    }
 }
 
 if ($filter_date_from) {
@@ -54,6 +54,7 @@ $where_sql = count($where_conditions) > 0 ? 'WHERE ' . implode(' AND ', $where_c
 
 // Create a unified history view query with all transaction types
 $history_query = "
+    -- Approved schedules (currently active)
     SELECT 
         'approved' as action_type,
         s.schedule_id as record_id,
@@ -71,8 +72,49 @@ $history_query = "
     
     UNION ALL
     
+    -- Approved cancellation requests (schedule data preserved in cancellation_requests)
     SELECT 
         'cancelled' as action_type,
+        c.cancellation_id as record_id,
+        COALESCE(c.title, s.title) as title,
+        COALESCE(c.start_date, s.start_date) as event_date,
+        COALESCE(c.start_time, s.start_time) as start_time,
+        COALESCE(c.end_time, s.end_time) as end_time,
+        COALESCE(c.program_owner, s.program_owner) as program_owner,
+        COALESCE(c.office, s.office) as office,
+        c.processed_at as action_date,
+        u.username as performed_by_name,
+        c.reason
+    FROM cancellation_requests c
+    LEFT JOIN approved_schedules s ON c.schedule_id = s.schedule_id
+    LEFT JOIN users u ON c.processed_by = u.user_id
+    WHERE c.status = 'approved'
+    
+    UNION ALL
+    
+    -- Pending cancellation requests
+    SELECT 
+        'cancel_requested' as action_type,
+        c.cancellation_id as record_id,
+        s.title,
+        s.start_date as event_date,
+        s.start_time,
+        s.end_time,
+        s.program_owner,
+        s.office,
+        c.created_at as action_date,
+        u.username as performed_by_name,
+        c.reason
+    FROM cancellation_requests c
+    JOIN approved_schedules s ON c.schedule_id = s.schedule_id
+    LEFT JOIN users u ON c.requestor_id = u.user_id
+    WHERE c.status = 'pending'
+    
+    UNION ALL
+    
+    -- Rejected cancellation requests
+    SELECT 
+        'cancel_rejected' as action_type,
         c.cancellation_id as record_id,
         s.title,
         s.start_date as event_date,
@@ -84,30 +126,56 @@ $history_query = "
         u.username as performed_by_name,
         c.reason
     FROM cancellation_requests c
-    LEFT JOIN approved_schedules s ON c.schedule_id = s.schedule_id
+    JOIN approved_schedules s ON c.schedule_id = s.schedule_id
     LEFT JOIN users u ON c.processed_by = u.user_id
-    WHERE c.status = 'approved'
+    WHERE c.status = 'rejected'
+    
+    UNION ALL
+    
+    -- Pull-outs (rejected requests with PULLED OUT prefix)
+    SELECT 
+        'pullout' as action_type,
+        sr.request_id as record_id,
+        sr.title,
+        sr.start_date as event_date,
+        sr.start_time,
+        sr.end_time,
+        sr.program_owner,
+        sr.office,
+        sr.updated_at as action_date,
+        'admin' as performed_by_name,
+        sr.rejection_reason as reason
+    FROM schedule_requests sr
+    WHERE sr.status = 'rejected' 
+    AND sr.rejection_reason LIKE 'PULLED OUT:%'
+    
+    UNION ALL
+    
+    -- Reschedules (track via updated_at being different from approved_at in approved_schedules)
+    SELECT 
+        'rescheduled' as action_type,
+        s.schedule_id as record_id,
+        s.title,
+        s.start_date as event_date,
+        s.start_time,
+        s.end_time,
+        s.program_owner,
+        s.office,
+        s.updated_at as action_date,
+        'admin' as performed_by_name,
+        'Schedule was rescheduled' as reason
+    FROM approved_schedules s
+    WHERE s.updated_at > DATE_ADD(s.approved_at, INTERVAL 1 SECOND)
     
     ORDER BY action_date DESC
 ";
 
-// Count total records
-$count_query = "SELECT COUNT(*) as total FROM ({$history_query}) as history {$where_sql}";
-$count_stmt = $conn->prepare($count_query);
+// Fetch all history records (no pagination for real-time filtering)
+$history_query_full = "SELECT * FROM ({$history_query}) as history {$where_sql}";
+$stmt = $conn->prepare($history_query_full);
 if (count($params) > 0) {
-    $count_stmt->bind_param($types, ...$params);
+    $stmt->bind_param($types, ...$params);
 }
-$count_stmt->execute();
-$total_records = $count_stmt->get_result()->fetch_assoc()['total'];
-$total_pages = ceil($total_records / $per_page);
-
-// Fetch paginated history
-$paginated_query = "SELECT * FROM ({$history_query}) as history {$where_sql} LIMIT ? OFFSET ?";
-$stmt = $conn->prepare($paginated_query);
-$params[] = $per_page;
-$params[] = $offset;
-$types .= 'ii';
-$stmt->bind_param($types, ...$params);
 $stmt->execute();
 $history_result = $stmt->get_result();
 
@@ -159,20 +227,16 @@ $pending_cancellations = $conn->query("SELECT COUNT(*) as total FROM cancellatio
         .action-badge { display:inline-flex; align-items:center; gap:.25rem; padding:.25rem .6rem; border-radius:16px; font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.03em; white-space:nowrap; }
         .action-badge.approved { background:#d4edda; color:#155724; }
         .action-badge.cancelled { background:#f8d7da; color:#721c24; }
+        .action-badge.cancel_requested { background:#fff3cd; color:#856404; }
+        .action-badge.cancel_rejected { background:#d1ecf1; color:#0c5460; }
         .action-badge.pullout { background:#ffe0b2; color:#e65100; }
         .action-badge.rescheduled { background:#cfe2ff; color:#084298; }
-
-        /* Pagination */
-        .pagination { display:flex; align-items:center; justify-content:center; gap:.5rem; margin-top:1.5rem; flex-wrap:wrap; }
-        .pagination a, .pagination span { padding:.5rem .9rem; border-radius:8px; font-size:.9rem; font-weight:600; transition:all .2s; }
-        .pagination a { background:#fff; color:#374151; border:2px solid #e5e7eb; text-decoration:none; }
-        .pagination a:hover { border-color:#4CAF50; color:#4CAF50; }
-        .pagination .current { background:linear-gradient(135deg,#4CAF50,#43a047); color:#fff; border:2px solid #4CAF50; }
-        .pagination .disabled { color:#9ca3af; cursor:not-allowed; }
 
         /* Export Button - Compact */
         .btn-export { padding:.5rem 1rem; border:2px solid #1e3a5f; border-radius:8px; background:#fff; color:#1e3a5f; font-size:.85rem; font-weight:600; cursor:pointer; transition:all .2s; text-decoration:none; display:inline-flex; align-items:center; gap:.4rem; }
         .btn-export:hover { background:#1e3a5f; color:#fff; }
+        .btn-export.filtered { border-color:#4CAF50; color:#4CAF50; }
+        .btn-export.filtered:hover { background:#4CAF50; color:#fff; }
 
         /* Responsive */
         @media (max-width: 768px) {
@@ -184,6 +248,19 @@ $pending_cancellations = $conn->query("SELECT COUNT(*) as total FROM cancellatio
             .history-table { font-size:.8rem; }
             .history-table th, .history-table td { padding:.6rem .5rem; }
         }
+        
+        /* Search highlight */
+        mark { background:#fff3cd; padding:0 2px; border-radius:2px; font-weight:inherit; }
+        
+        /* Loading indicator */
+        .filter-loading { display:none; align-items:center; gap:.5rem; color:#4CAF50; font-size:.85rem; font-weight:600; margin-left:.5rem; }
+        .filter-loading.active { display:inline-flex; }
+        .filter-loading-spinner { width:14px; height:14px; border:2px solid #e5e7eb; border-top-color:#4CAF50; border-radius:50%; animation:spin .6s linear infinite; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+        
+        /* Smooth row transitions */
+        .history-table tbody tr { transition:opacity .2s ease, transform .2s ease; }
+        .history-table tbody tr.hiding { opacity:0; transform:translateX(-10px); }
     </style>
 </head>
 <body>
@@ -272,31 +349,33 @@ $pending_cancellations = $conn->query("SELECT COUNT(*) as total FROM cancellatio
                         <!-- Page Header -->
                         <div class="page-header">
                             <h3 class="page-title">📜 Transaction History</h3>
-                            <a href="export_history.php?<?php echo http_build_query($_GET); ?>" class="btn-export">
-                                📥 Export
-                            </a>
+                            <button onclick="exportFilteredData()" class="btn-export" id="exportBtn">
+                                📥 Export (<span id="exportCount"><?php echo $history_result->num_rows; ?></span>)
+                            </button>
                         </div>
 
                         <!-- Filter Section -->
                         <form method="GET" action="history.php" class="filter-section" id="filterForm">
                             <div class="filter-group">
                                 <label>Type:</label>
-                                <select name="type" style="width:140px;">
-                                    <option value="all" <?php echo $filter_type === 'all' ? 'selected' : ''; ?>>All</option>
+                                <select name="type" id="filterType" style="width:160px;">
+                                    <option value="all" <?php echo $filter_type === 'all' ? 'selected' : ''; ?>>All Actions</option>
                                     <option value="approved" <?php echo $filter_type === 'approved' ? 'selected' : ''; ?>>Approved</option>
-                                    <option value="cancelled" <?php echo $filter_type === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
+                                    <option value="cancelled" <?php echo $filter_type === 'cancelled' ? 'selected' : ''; ?>>Cancellations</option>
+                                    <option value="pullout" <?php echo $filter_type === 'pullout' ? 'selected' : ''; ?>>Pull-outs</option>
+                                    <option value="rescheduled" <?php echo $filter_type === 'rescheduled' ? 'selected' : ''; ?>>Rescheduled</option>
                                 </select>
                             </div>
                             <div class="filter-group">
                                 <label>From:</label>
-                                <input type="date" name="date_from" value="<?php echo htmlspecialchars($filter_date_from); ?>" style="width:150px;">
+                                <input type="date" name="date_from" id="filterDateFrom" value="<?php echo htmlspecialchars($filter_date_from); ?>" style="width:150px;">
                             </div>
                             <div class="filter-group">
                                 <label>To:</label>
-                                <input type="date" name="date_to" value="<?php echo htmlspecialchars($filter_date_to); ?>" style="width:150px;">
+                                <input type="date" name="date_to" id="filterDateTo" value="<?php echo htmlspecialchars($filter_date_to); ?>" style="width:150px;">
                             </div>
                             <div class="filter-group">
-                                <input type="text" name="search" placeholder="Search title, owner, office..." value="<?php echo htmlspecialchars($search_query); ?>">
+                                <input type="text" name="search" id="searchInput" placeholder="Search title, owner, office..." value="<?php echo htmlspecialchars($search_query); ?>" autocomplete="off">
                             </div>
                             <div class="filter-actions">
                                 <button type="submit" class="btn-icon primary" title="Apply Filters">🔍</button>
@@ -306,7 +385,11 @@ $pending_cancellations = $conn->query("SELECT COUNT(*) as total FROM cancellatio
 
                         <!-- Results Summary -->
                         <p class="results-info" style="margin-bottom:.75rem;">
-                            Showing <?php echo $history_result->num_rows; ?> of <?php echo $total_records; ?> records
+                            Showing <span id="visibleCount"><?php echo $history_result->num_rows; ?></span> of <span id="totalCount"><?php echo $history_result->num_rows; ?></span> records
+                            <span class="filter-loading" id="filterLoading">
+                                <span class="filter-loading-spinner"></span>
+                                Filtering...
+                            </span>
                         </p>
 
                         <!-- History Table -->
@@ -324,14 +407,24 @@ $pending_cancellations = $conn->query("SELECT COUNT(*) as total FROM cancellatio
                                             <th style="width:100px;">By</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody id="historyTableBody">
                                         <?php while ($row = $history_result->fetch_assoc()): ?>
-                                            <tr>
+                                            <tr data-action-type="<?php echo $row['action_type']; ?>" 
+                                                data-record-id="<?php echo $row['record_id']; ?>"
+                                                data-title="<?php echo htmlspecialchars(strtolower($row['title'])); ?>" 
+                                                data-owner="<?php echo htmlspecialchars(strtolower($row['program_owner'])); ?>" 
+                                                data-office="<?php echo htmlspecialchars(strtolower($row['office'])); ?>"
+                                                data-event-date="<?php echo $row['event_date']; ?>"
+                                                data-action-date="<?php echo date('Y-m-d', strtotime($row['action_date'])); ?>">
                                                 <td>
                                                     <?php if ($row['action_type'] === 'approved'): ?>
                                                         <span class="action-badge approved">✓ Approved</span>
                                                     <?php elseif ($row['action_type'] === 'cancelled'): ?>
                                                         <span class="action-badge cancelled">✗ Cancelled</span>
+                                                    <?php elseif ($row['action_type'] === 'cancel_requested'): ?>
+                                                        <span class="action-badge cancel_requested">⏳ Cancel Req</span>
+                                                    <?php elseif ($row['action_type'] === 'cancel_rejected'): ?>
+                                                        <span class="action-badge cancel_rejected">↩ Cancel Denied</span>
                                                     <?php elseif ($row['action_type'] === 'pullout'): ?>
                                                         <span class="action-badge pullout">⚠ Pull-out</span>
                                                     <?php elseif ($row['action_type'] === 'rescheduled'): ?>
@@ -351,38 +444,8 @@ $pending_cancellations = $conn->query("SELECT COUNT(*) as total FROM cancellatio
                                     </tbody>
                                 </table>
                             </div>
-
-                            <!-- Pagination -->
-                            <?php if ($total_pages > 1): ?>
-                                <div class="pagination">
-                                    <?php if ($page > 1): ?>
-                                        <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page - 1])); ?>">← Previous</a>
-                                    <?php else: ?>
-                                        <span class="disabled">← Previous</span>
-                                    <?php endif; ?>
-
-                                    <?php
-                                    $start_page = max(1, $page - 2);
-                                    $end_page = min($total_pages, $page + 2);
-                                    
-                                    for ($i = $start_page; $i <= $end_page; $i++):
-                                    ?>
-                                        <?php if ($i === $page): ?>
-                                            <span class="current"><?php echo $i; ?></span>
-                                        <?php else: ?>
-                                            <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $i])); ?>"><?php echo $i; ?></a>
-                                        <?php endif; ?>
-                                    <?php endfor; ?>
-
-                                    <?php if ($page < $total_pages): ?>
-                                        <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page + 1])); ?>">Next →</a>
-                                    <?php else: ?>
-                                        <span class="disabled">Next →</span>
-                                    <?php endif; ?>
-                                </div>
-                            <?php endif; ?>
                         <?php else: ?>
-                            <p class="no-data">No transaction history found matching your filters.</p>
+                            <p class="no-data">No transaction history found.</p>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -394,6 +457,274 @@ $pending_cancellations = $conn->query("SELECT COUNT(*) as total FROM cancellatio
 <script src="../assets/js/sidebar.js"></script>
 <script src="../assets/js/mobile-menu.js"></script>
 <script src="../assets/js/responsive.js"></script>
+
+<script>
+// Real-time filtering for transaction history
+(function() {
+    const searchInput = document.getElementById('searchInput');
+    const filterType = document.getElementById('filterType');
+    const filterDateFrom = document.getElementById('filterDateFrom');
+    const filterDateTo = document.getElementById('filterDateTo');
+    const tableBody = document.getElementById('historyTableBody');
+    const visibleCount = document.getElementById('visibleCount');
+    const totalCount = document.getElementById('totalCount');
+    const filterLoading = document.getElementById('filterLoading');
+    const allRows = Array.from(tableBody.querySelectorAll('tr'));
+    
+    // Set initial total count
+    totalCount.textContent = allRows.length;
+    
+    // Debounce function for search input
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+    
+    // Show loading indicator
+    function showLoading() {
+        filterLoading.classList.add('active');
+    }
+    
+    // Hide loading indicator
+    function hideLoading() {
+        setTimeout(() => {
+            filterLoading.classList.remove('active');
+        }, 200);
+    }
+    
+    // Main filter function
+    function filterTable() {
+        showLoading();
+        
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        const selectedType = filterType.value;
+        const dateFrom = filterDateFrom.value;
+        const dateTo = filterDateTo.value;
+        
+        let visibleRowCount = 0;
+        
+        allRows.forEach(row => {
+            let show = true;
+            
+            // Filter by action type
+            if (selectedType !== 'all') {
+                const rowType = row.dataset.actionType;
+                if (selectedType === 'cancelled') {
+                    // Include all cancellation-related types
+                    show = rowType === 'cancelled' || rowType === 'cancel_requested' || rowType === 'cancel_rejected';
+                } else {
+                    show = rowType === selectedType;
+                }
+            }
+            
+            // Filter by search term (title, owner, office)
+            if (show && searchTerm) {
+                const title = row.dataset.title || '';
+                const owner = row.dataset.owner || '';
+                const office = row.dataset.office || '';
+                
+                show = title.includes(searchTerm) || 
+                       owner.includes(searchTerm) || 
+                       office.includes(searchTerm);
+            }
+            
+            // Filter by date from
+            if (show && dateFrom) {
+                const eventDate = row.dataset.eventDate;
+                show = eventDate >= dateFrom;
+            }
+            
+            // Filter by date to
+            if (show && dateTo) {
+                const eventDate = row.dataset.eventDate;
+                show = eventDate <= dateTo;
+            }
+            
+            // Show or hide row with animation
+            if (show) {
+                row.classList.remove('hiding');
+                row.style.display = '';
+                visibleRowCount++;
+            } else {
+                row.classList.add('hiding');
+                setTimeout(() => {
+                    if (row.classList.contains('hiding')) {
+                        row.style.display = 'none';
+                    }
+                }, 200);
+            }
+        });
+        
+        // Update visible count
+        visibleCount.textContent = visibleRowCount;
+        
+        // Update export count
+        document.getElementById('exportCount').textContent = visibleRowCount;
+        
+        // Show "no results" message if needed
+        showNoResultsMessage(visibleRowCount);
+        
+        hideLoading();
+    }
+    
+    // Show/hide no results message
+    function showNoResultsMessage(count) {
+        let noResultsRow = document.getElementById('noResultsRow');
+        
+        if (count === 0) {
+            if (!noResultsRow) {
+                noResultsRow = document.createElement('tr');
+                noResultsRow.id = 'noResultsRow';
+                noResultsRow.innerHTML = '<td colspan="7" style="text-align:center;padding:2rem;color:#9ca3af;font-size:.9rem;">📭 No matching records found. Try adjusting your filters.</td>';
+                tableBody.appendChild(noResultsRow);
+            }
+        } else {
+            if (noResultsRow) {
+                noResultsRow.remove();
+            }
+        }
+    }
+    
+    // Attach event listeners
+    searchInput.addEventListener('input', debounce(filterTable, 300));
+    filterType.addEventListener('change', filterTable);
+    filterDateFrom.addEventListener('change', filterTable);
+    filterDateTo.addEventListener('change', filterTable);
+    
+    // Add visual feedback for active filters
+    function updateFilterIndicators() {
+        const hasSearch = searchInput.value.trim() !== '';
+        const hasType = filterType.value !== 'all';
+        const hasDateFrom = filterDateFrom.value !== '';
+        const hasDateTo = filterDateTo.value !== '';
+        
+        if (hasSearch) {
+            searchInput.style.borderColor = '#4CAF50';
+            searchInput.style.background = '#f0fdf4';
+        } else {
+            searchInput.style.borderColor = '#e5e7eb';
+            searchInput.style.background = '#fff';
+        }
+        
+        if (hasType) {
+            filterType.style.borderColor = '#4CAF50';
+        } else {
+            filterType.style.borderColor = '#e5e7eb';
+        }
+        
+        if (hasDateFrom) {
+            filterDateFrom.style.borderColor = '#4CAF50';
+        } else {
+            filterDateFrom.style.borderColor = '#e5e7eb';
+        }
+        
+        if (hasDateTo) {
+            filterDateTo.style.borderColor = '#4CAF50';
+        } else {
+            filterDateTo.style.borderColor = '#e5e7eb';
+        }
+    }
+    
+    // Update indicators on input
+    searchInput.addEventListener('input', updateFilterIndicators);
+    filterType.addEventListener('change', updateFilterIndicators);
+    filterDateFrom.addEventListener('change', updateFilterIndicators);
+    filterDateTo.addEventListener('change', updateFilterIndicators);
+    
+    // Update export button style based on filters
+    function updateExportButton() {
+        const exportBtn = document.getElementById('exportBtn');
+        const hasFilters = searchInput.value.trim() !== '' || 
+                          filterType.value !== 'all' || 
+                          filterDateFrom.value !== '' || 
+                          filterDateTo.value !== '';
+        
+        if (hasFilters) {
+            exportBtn.classList.add('filtered');
+            exportBtn.title = 'Export filtered results only';
+        } else {
+            exportBtn.classList.remove('filtered');
+            exportBtn.title = 'Export all records';
+        }
+    }
+    
+    // Update export button on filter changes
+    searchInput.addEventListener('input', updateExportButton);
+    filterType.addEventListener('change', updateExportButton);
+    filterDateFrom.addEventListener('change', updateExportButton);
+    filterDateTo.addEventListener('change', updateExportButton);
+    
+    // Initial export button update
+    updateExportButton();
+    
+    // Initial indicator update
+    updateFilterIndicators();
+    
+    // Clear search on Escape key
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            searchInput.value = '';
+            filterTable();
+            updateFilterIndicators();
+        }
+    });
+    
+    // Prevent form submission (we're doing real-time filtering)
+    document.getElementById('filterForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        return false;
+    });
+})();
+
+// Export filtered data
+function exportFilteredData() {
+    const searchInput = document.getElementById('searchInput');
+    const filterType = document.getElementById('filterType');
+    const filterDateFrom = document.getElementById('filterDateFrom');
+    const filterDateTo = document.getElementById('filterDateTo');
+    const tableBody = document.getElementById('historyTableBody');
+    
+    // Get all visible row IDs
+    const visibleRows = Array.from(tableBody.querySelectorAll('tr'))
+        .filter(row => row.style.display !== 'none' && row.dataset.recordId);
+    
+    const visibleRecordIds = visibleRows.map(row => row.dataset.recordId);
+    const visibleActionTypes = visibleRows.map(row => row.dataset.actionType);
+    
+    // Build export URL with current filters
+    const params = new URLSearchParams();
+    
+    // Add filter parameters
+    if (filterType.value !== 'all') {
+        params.append('type', filterType.value);
+    }
+    if (filterDateFrom.value) {
+        params.append('date_from', filterDateFrom.value);
+    }
+    if (filterDateTo.value) {
+        params.append('date_to', filterDateTo.value);
+    }
+    if (searchInput.value.trim()) {
+        params.append('search', searchInput.value.trim());
+    }
+    
+    // Add visible record IDs for exact filtering
+    if (visibleRecordIds.length > 0) {
+        params.append('record_ids', visibleRecordIds.join(','));
+        params.append('action_types', visibleActionTypes.join(','));
+    }
+    
+    // Redirect to export
+    window.location.href = 'export_history.php?' + params.toString();
+}
+</script>
 </body>
 </html>
 
