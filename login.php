@@ -153,14 +153,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .login-logo {
             width: 80px;
             height: 80px;
-            background: linear-gradient(135deg, #4CAF50 0%, #66bb6a 100%);
+            background: #fff;
             border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2.5rem;
             margin: 0 auto 1rem;
             box-shadow: 0 10px 30px rgba(76, 175, 80, 0.3);
+            padding: 10px;
+        }
+        
+        .login-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
         
         .login-title {
@@ -308,7 +314,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             .login-logo {
                 width: 70px;
                 height: 70px;
-                font-size: 2rem;
+                padding: 8px;
             }
             
             .login-title {
@@ -338,7 +344,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             .login-logo {
                 width: 60px;
                 height: 60px;
-                font-size: 1.75rem;
+                padding: 6px;
                 margin-bottom: 0.75rem;
             }
             
@@ -379,7 +385,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="login-container">
             <div class="login-card">
                 <div class="login-header">
-                    <div class="login-logo">🔬</div>
+                    <div class="login-logo">
+                        <img src="carcar logo.png" alt="Carcar Logo">
+                    </div>
                     <h1 class="login-title">Welcome Back</h1>
                     <p class="login-subtitle">Training Laboratory Schedule System</p>
                 </div>

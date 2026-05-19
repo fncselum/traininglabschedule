@@ -86,7 +86,7 @@ $total_cancellations = $conn->query("SELECT COUNT(*) as total FROM cancellation_
         <aside class="sidebar">
             <div class="sidebar-header">
                 <a href="dashboard.php" class="sidebar-logo">
-                    <div class="sidebar-logo-icon">🔬</div>
+                    <div <img src="C:\xampp\htdocs" alt="Description of the photo"></div>
                     <div class="sidebar-logo-text">
                         <span class="sidebar-logo-title">Training Lab</span>
                         <span class="sidebar-logo-subtitle">Schedule System</span>

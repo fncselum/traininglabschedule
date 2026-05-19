@@ -7,12 +7,12 @@
 // SMTP Configuration
 define('SMTP_HOST', 'smtp.gmail.com');           // Your SMTP server (e.g., smtp.gmail.com for Gmail)
 define('SMTP_PORT', 587);                         // SMTP port (587 for TLS, 465 for SSL)
-define('SMTP_USERNAME', 'elumfrancesclear@gmail.com'); // Your email address
-define('SMTP_PASSWORD', 'salm djjk cuwd jgbx');    // Your email password or app-specific password
+define('SMTP_USERNAME', 'example@gmail.com'); // Your email address
+define('SMTP_PASSWORD', 'your google app password');    // Your email password or app-specific password
 define('SMTP_ENCRYPTION', 'tls');                // Encryption type: 'tls' or 'ssl'
 
 // Sender Information Q
-define('MAIL_FROM_EMAIL', 'elumfrancesclear@gmail.com');
+define('MAIL_FROM_EMAIL', 'example@gmail.com');
 define('MAIL_FROM_NAME', 'Training Lab Schedule System');
 
 // Email Settings

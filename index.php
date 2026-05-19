@@ -280,6 +280,27 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
         header h1 {
             font-size: 1.25rem;
             font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .header-logo {
+            width: 40px;
+            height: 40px;
+            background: #fff;
+            border-radius: 8px;
+            padding: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .header-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
         
         .btn-login {
@@ -1302,6 +1323,12 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
                 font-size: 1rem;
             }
             
+            .header-logo {
+                width: 32px;
+                height: 32px;
+                padding: 4px;
+            }
+            
             .calendar-header h2 {
                 font-size: 1.25rem;
             }
@@ -1389,6 +1416,12 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
                 font-size: 1.75rem;
             }
             
+            .header-logo {
+                width: 50px;
+                height: 50px;
+                padding: 8px;
+            }
+            
             .calendar-wrapper {
                 padding: 2rem 3rem;
             }
@@ -1451,6 +1484,12 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
             
             header h1 {
                 font-size: 2.25rem;
+            }
+            
+            .header-logo {
+                width: 60px;
+                height: 60px;
+                padding: 10px;
             }
             
             .btn-login {
@@ -1540,6 +1579,12 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
                 font-size: 3rem;
             }
             
+            .header-logo {
+                width: 70px;
+                height: 70px;
+                padding: 12px;
+            }
+            
             .btn-login {
                 padding: 1rem 2.5rem;
                 font-size: 1.5rem;
@@ -1622,7 +1667,12 @@ $firstDayOfWeek = (int)date('w', strtotime($startDate)); // 0 = Sunday, 6 = Satu
     <!-- Compact Header -->
     <header>
         <div class="header-content">
-            <h1>🔬 Training Laboratory Schedule</h1>
+            <h1>
+                <span class="header-logo">
+                    <img src="carcar logo.png" alt="Carcar Logo">
+                </span>
+                Training Laboratory Schedule
+            </h1>
             <?php if ($isLoggedIn): ?>
                 <div style="display: flex; align-items: center; gap: 1rem;">
                     <span style="color: rgba(255,255,255,0.9); font-size: 0.9rem;">
